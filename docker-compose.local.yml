@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  dte_engine:
+    build: .
+    container_name: dte_engine
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./certs:/app/certs:ro
+      - ./app:/app/app:ro
+    env_file:
+      - .env
+    environment:
+      - SII_AMBIENTE=certificacion
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_dte
+    environment:
+      - POSTGRES_USER=dte_user
+      - POSTGRES_PASSWORD=dte_password
+      - POSTGRES_DB=dte_engine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
