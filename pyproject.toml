@@ -1,3 +1,6 @@
+[tool.setuptools.packages.find]
+where = ["app"]
+exclude = ["alembic", "scratch"]
 [project]
 name = "dte-core-engine"
 version = "0.1.0"

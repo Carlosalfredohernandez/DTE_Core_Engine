@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     sii_ambiente: Ambiente = Ambiente.CERTIFICACION
 
     # ── Base de datos ─────────────────────────────────────────────────────
-    database_url: str = "postgresql+asyncpg://dte_user:dte_password@localhost:5432/dte_engine"
+    database_url: str = "mysql+aiomysql://root:dXTVcVNqAodpcFhmaGyCsfBGfgJWQCoF@turntable.proxy.rlwy.net:51344/railway"
 
     # ── Datos Globales Emisor (Single-Tenant) ─────────────────────────────
     rut_emisor: str = "76123456-7"
