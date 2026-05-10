@@ -68,8 +68,8 @@ class Settings(BaseSettings):
     cert_pfx_password: str = ""
 
     # ── Seguridad API ─────────────────────────────────────────────────────
-    api_key: str = "cambiar-por-clave-segura"
-    jwt_secret_key: str = "cambiar-por-secret-seguro"
+    api_key: str = "Vikingo80"
+    jwt_secret_key: str = "Vikingo80"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
 
