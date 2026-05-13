@@ -111,9 +111,9 @@ class XmlBuilderService:
             if tipo_dte == TipoDte.BOLETA_EXENTA:
                 etree.SubElement(detalle_el, "IndExe").text = "1"
             etree.SubElement(detalle_el, "NmbItem").text = str(det["nombre"])
-            # Compatibilidad SII: en boletas, QtyItem/PrcItem son opcionales y
-            # algunos validadores legacy reportan RSC con decimales en estos campos.
-            # Se envía solo el monto por línea, que es obligatorio.
+            # Agregar cantidad y precio unitario si están presentes
+            etree.SubElement(detalle_el, "QtyItem").text = str(det.get("cantidad", 1))
+            etree.SubElement(detalle_el, "PrcItem").text = str(det.get("precio", 0))
             etree.SubElement(detalle_el, "MontoItem").text = str(detalle_montos_xml[i - 1])
 
         # TED (Timbre Electrónico DTE)
