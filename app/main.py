@@ -11,8 +11,9 @@ from fastapi.responses import JSONResponse
 from app.api.v1.router import api_router
 from app.config import get_settings
 from app.infrastructure.logging_config import setup_logging
-from app.infrastructure.database import engine
+from app.infrastructure.database import async_session_factory, engine
 from app.domain.models import Base
+from app.services.empresa_service import seed_default_empresa_data
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
@@ -26,6 +27,9 @@ async def lifespan(app: FastAPI):
     # Al iniciar: crea las tablas si no existen
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    async with async_session_factory() as session:
+        await seed_default_empresa_data(session)
         
     logger.info(
         "Iniciando Motor DTE",

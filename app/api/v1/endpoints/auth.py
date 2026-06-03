@@ -5,7 +5,7 @@ DTE Core Engine — Endpoint para estado del Token SII.
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app.api.deps import get_api_key
+from app.api.deps import get_api_key, get_current_empresa
 from app.services.token_service import token_service
 
 router = APIRouter()
@@ -31,13 +31,14 @@ class CertTestResponse(BaseModel):
 
 
 @router.get("/status", response_model=TokenStatusResponse)
-async def get_token_status(_: str = Depends(get_api_key)):
+async def get_token_status(empresa = Depends(get_current_empresa), _: str = Depends(get_api_key)):
     """Retorna el estado de la caché del Token del SII."""
     # Accedemos a variables internas para solo lectura rápida
-    is_cached = token_service._cached_token is not None
+    cache_key = token_service._cache_key(empresa)
+    is_cached = cache_key in token_service._cached_tokens
     expires_at = None
-    if token_service._token_expires_at:
-        expires_at = token_service._token_expires_at.isoformat()
+    if cache_key in token_service._token_expires_at:
+        expires_at = token_service._token_expires_at[cache_key].isoformat()
         
     return TokenStatusResponse(
         is_cached=is_cached,
@@ -46,9 +47,9 @@ async def get_token_status(_: str = Depends(get_api_key)):
 
 
 @router.post("/refresh")
-async def refresh_token(_: str = Depends(get_api_key)):
+async def refresh_token(empresa = Depends(get_current_empresa), _: str = Depends(get_api_key)):
     """Fuerza la renovación del Token en el SII."""
-    token = await token_service.get_valid_token(force_refresh=True)
+    token = await token_service.get_valid_token(force_refresh=True, empresa=empresa)
     return {"message": "Token renovado exitosamente"}
 
 

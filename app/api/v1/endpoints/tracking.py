@@ -6,7 +6,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_api_key, get_db_session
+from app.api.deps import get_api_key, get_current_empresa, get_db_session
 from app.domain.exceptions import DteEngineError
 from app.services.track_service import TrackService
 
@@ -18,13 +18,14 @@ router = APIRouter()
 async def consultar_estado_envio(
     dte_id: int,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """
     Consulta el estado de un envío de DTE en el SII y actualiza la base de datos local.
     """
     try:
-        resultado = await TrackService.consultar_estado_envio(db, dte_id)
+        resultado = await TrackService.consultar_estado_envio(db, dte_id, empresa=empresa)
         return resultado
     except ValueError as e:
         logger.warning("Solicitud de tracking inválida", dte_id=dte_id, error=str(e))

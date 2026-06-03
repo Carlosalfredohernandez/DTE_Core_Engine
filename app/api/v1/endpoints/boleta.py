@@ -11,7 +11,7 @@ from fastapi.responses import PlainTextResponse
 from lxml import etree
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_api_key, get_db_session
+from app.api.deps import get_api_key, get_current_empresa, get_db_session
 from app.api.v1.schemas.boleta import (
     BoletaCreateRequest,
     BoletaResponse,
@@ -87,6 +87,7 @@ def _forensic_identity(xml_text: str) -> dict:
 async def generar_boleta(
     request: BoletaCreateRequest,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """Genera el XML firmado de una Boleta Electrónica usando un CAF válido."""
@@ -100,6 +101,7 @@ async def generar_boleta(
             receptor=receptor_dict,
             detalles=detalles_list,
             fecha_emision=request.fecha_emision,
+            empresa=empresa,
         )
 
         xml_b64 = None
@@ -124,12 +126,15 @@ async def generar_boleta(
 async def obtener_boleta(
     id: int,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """Obtiene los detalles de una boleta por su ID, incluyendo el XML en Base64."""
     from app.domain.models import Dte
     dte = await db.get(Dte, id)
     if not dte:
+        raise HTTPException(status_code=404, detail="Boleta no encontrada")
+    if dte.empresa_id is not None and dte.empresa_id != empresa.id:
         raise HTTPException(status_code=404, detail="Boleta no encontrada")
 
     xml_b64 = None
@@ -151,12 +156,15 @@ async def obtener_boleta(
 async def obtener_xml_boleta(
     id: int,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """Devuelve el XML crudo del envío (o del documento) de una boleta para debugging."""
     from app.domain.models import Dte
     dte = await db.get(Dte, id)
     if not dte:
+        raise HTTPException(status_code=404, detail="Boleta no encontrada")
+    if dte.empresa_id is not None and dte.empresa_id != empresa.id:
         raise HTTPException(status_code=404, detail="Boleta no encontrada")
     xml = dte.xml_envio or dte.xml_documento or ""
     return PlainTextResponse(content=xml, media_type="text/xml; charset=utf-8")
@@ -166,6 +174,7 @@ async def obtener_xml_boleta(
 async def obtener_log_boleta(
     id: int,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """Devuelve el último log de UPLOAD del SII (XML enviado + respuesta raw) para debugging."""
@@ -173,7 +182,7 @@ async def obtener_log_boleta(
     from sqlalchemy import select, desc
     stmt = select(SiiLog).where(
         SiiLog.dte_id == id,
-        SiiLog.operacion == "UPLOAD"
+        SiiLog.operacion == "UPLOAD",
     ).order_by(desc(SiiLog.id)).limit(1)
     result = await db.execute(stmt)
     log = result.scalar_one_or_none()
@@ -193,6 +202,7 @@ async def diagnostico_firma_boleta(
     id: int,
     comparar_con: int | None = None,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """Entrega diagnóstico de firma local del XML de envío y comparación opcional entre DTEs."""
@@ -200,6 +210,8 @@ async def diagnostico_firma_boleta(
 
     dte = await db.get(Dte, id)
     if not dte:
+        raise HTTPException(status_code=404, detail="Boleta no encontrada")
+    if dte.empresa_id is not None and dte.empresa_id != empresa.id:
         raise HTTPException(status_code=404, detail="Boleta no encontrada")
 
     xml_base = dte.xml_envio or dte.xml_documento
@@ -229,6 +241,8 @@ async def diagnostico_firma_boleta(
 
     other = await db.get(Dte, comparar_con)
     if not other:
+        raise HTTPException(status_code=404, detail=f"Boleta de comparación no encontrada: {comparar_con}")
+    if other.empresa_id is not None and other.empresa_id != empresa.id:
         raise HTTPException(status_code=404, detail=f"Boleta de comparación no encontrada: {comparar_con}")
 
     xml_other = other.xml_envio or other.xml_documento
@@ -262,12 +276,15 @@ async def diagnostico_firma_boleta(
 async def obtener_xml_crudo(
     id: int,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """Retorna el XML crudo (envio o documento) de una boleta en formato texto plano."""
     from app.domain.models import Dte
     dte = await db.get(Dte, id)
     if not dte:
+        raise HTTPException(status_code=404, detail="Boleta no encontrada")
+    if dte.empresa_id is not None and dte.empresa_id != empresa.id:
         raise HTTPException(status_code=404, detail="Boleta no encontrada")
 
     xml_content = dte.xml_envio or dte.xml_documento
@@ -281,11 +298,12 @@ async def obtener_xml_crudo(
 async def enviar_boleta(
     request: EnviarBoletaRequest,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """Envía una boleta generada previamente al SII."""
     try:
-        dte = await DteService.enviar_boleta(db, request.dte_id)
+        dte = await DteService.enviar_boleta(db, request.dte_id, empresa=empresa)
         
         return EnviarBoletaResponse(
             dte_id=dte.id,

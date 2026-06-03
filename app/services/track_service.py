@@ -13,7 +13,7 @@ from app.clients.query_client import QueryClient
 from app.config import get_settings
 from app.domain.enums import EstadoDte, EstadoSii
 from app.domain.exceptions import SiiQueryError
-from app.domain.models import Dte, SiiLog
+from app.domain.models import Dte, Empresa, SiiLog
 from app.services.caf_service import CafService
 from app.services.token_service import token_service
 from app.services.xml_signer import XmlSignerService
@@ -111,13 +111,13 @@ class TrackService:
             )
             checks["max_line_length_le_4090"] = max_line_length <= 4090
             checks["caratula_rutenvia_matches_settings"] = (
-                rut_envia_car == settings.rut_envia.replace(".", "") if rut_envia_car else None
+                rut_envia_car == rut_envia.replace(".", "") if rut_envia_car else None
             )
             checks["caratula_fchresol_matches_settings"] = (
-                fch_resol_car == settings.sii_fecha_resolucion if fch_resol_car else None
+                fch_resol_car == (empresa.sii_fecha_resolucion if empresa is not None else settings.sii_fecha_resolucion) if fch_resol_car else None
             )
             checks["caratula_nroresol_matches_settings"] = (
-                str(nro_resol_car) == str(settings.sii_numero_resolucion) if nro_resol_car else None
+                str(nro_resol_car) == str(empresa.sii_numero_resolucion if empresa is not None else settings.sii_numero_resolucion) if nro_resol_car else None
             )
 
             if ind_mnt_neto == "2":
@@ -166,7 +166,7 @@ class TrackService:
         return None
 
     @staticmethod
-    async def consultar_estado_envio(session: AsyncSession, dte_id: int) -> dict:
+    async def consultar_estado_envio(session: AsyncSession, dte_id: int, empresa: Empresa | None = None) -> dict:
         """
         Consulta el TrackID de un DTE enviado usando QueryEstUp.
         """
@@ -174,12 +174,14 @@ class TrackService:
         if not dte or not dte.track_id:
             raise ValueError("DTE no encontrado o no tiene TrackID asignado")
 
-        token = await token_service.get_valid_token()
+        token = await token_service.get_valid_token(empresa=empresa)
         client = QueryClient()
         debug_enabled = settings.sii_debug_tracking
 
-        rut_sin_dv = settings.rut_emisor.split("-")[0]
-        dv = settings.rut_emisor.split("-")[1]
+        rut_emisor = empresa.rut_emisor if empresa is not None else settings.rut_emisor
+        rut_envia = empresa.rut_envia if empresa is not None else settings.rut_envia
+        rut_sin_dv = rut_emisor.split("-")[0]
+        dv = rut_emisor.split("-")[1]
 
         try:
             response_xml = await client.get_est_up(
@@ -216,8 +218,8 @@ class TrackService:
             if estado_envio in (EstadoSii.RECHAZADO_SCHEMA, EstadoSii.RECHAZADO, "RFR"):
                 # Si el sobre fue rechazado, pedimos detalle por documento para
                 # obtener código/glosa específica (schema, firma, datos, etc.).
-                rut_cons_envia, dv_cons_envia = TrackService._split_rut(settings.rut_envia)
-                rut_cons_emisor, dv_cons_emisor = TrackService._split_rut(settings.rut_emisor)
+                rut_cons_envia, dv_cons_envia = TrackService._split_rut(rut_envia)
+                rut_cons_emisor, dv_cons_emisor = TrackService._split_rut(rut_emisor)
                 rut_rec, dv_rec = TrackService._split_rut(dte.rut_receptor or "66666666-6")
                 monto = str(int(float(dte.monto_total)))
                 fecha = dte.fecha_emision.strftime("%Y-%m-%d")
@@ -277,6 +279,7 @@ class TrackService:
 
                     session.add(
                         SiiLog(
+                            empresa_id=empresa.id if empresa and empresa.id is not None else None,
                             dte_id=dte.id,
                             operacion="QUERY_EST_DTE",
                             request_data=(
@@ -293,6 +296,7 @@ class TrackService:
             logger.info("Estado QueryEstUp parseado", estado_envio=estado_envio, desc_estado=desc_estado)
 
             log = SiiLog(
+                empresa_id=empresa.id if empresa and empresa.id is not None else None,
                 dte_id=dte.id,
                 operacion="QUERY_EST_UP",
                 request_data=f"TrackID: {dte.track_id}",

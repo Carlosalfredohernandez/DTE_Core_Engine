@@ -19,8 +19,8 @@ from app.domain.exceptions import (
     CafNotFoundError,
     SiiEnvioError,
 )
-from app.domain.models import Caf, Dte, SiiLog
-from app.infrastructure.certificate import load_pfx_from_settings
+from app.domain.models import Caf, Dte, Empresa, SiiLog
+from app.infrastructure.certificate import load_pfx_from_empresa, load_pfx_from_settings
 from app.config import get_settings
 from app.services.caf_service import CafService
 from app.services.schema_validator import validate_envio_schema
@@ -91,7 +91,8 @@ class DteService:
         tipo_dte: TipoDte,
         receptor: dict[str, Any] | None,
         detalles: list[dict[str, Any]],
-        fecha_emision: datetime.date | None = None
+        fecha_emision: datetime.date | None = None,
+        empresa: Empresa | None = None,
     ) -> Dte:
         """
         Orquesta la generación completa de una Boleta.
@@ -104,6 +105,8 @@ class DteService:
             Caf.tipo_dte == tipo_dte.value,
             Caf.activo == True
         ).order_by(Caf.id.asc()).limit(1)
+        if empresa is not None:
+            stmt = stmt.where(Caf.empresa_id == empresa.id)
         
         result = await session.execute(stmt)
         caf_db = result.scalar_one_or_none()
@@ -151,11 +154,12 @@ class DteService:
             tipo_dte=tipo_dte,
             receptor=receptor,
             detalles=detalles,
-            caf_info=caf_info
+            caf_info=caf_info,
+            empresa=empresa,
         )
 
         # 4. Firmar el documento XML con el Certificado Digital (.pfx)
-        cert_data = load_pfx_from_settings()
+        cert_data = load_pfx_from_empresa(empresa) if empresa is not None else load_pfx_from_settings()
         uri_referencia = f"#T{tipo_dte.value}F{folio}"
         xml_firmado = XmlSignerService.sign_document(xml_sin_firma, cert_data, uri_referencia)
 
@@ -167,6 +171,7 @@ class DteService:
         rut_receptor_xml = receptor.get("rut", "66666666-6") if receptor else "66666666-6"
         
         dte_db = Dte(
+            empresa_id=empresa.id if empresa and empresa.id is not None else None,
             tipo_dte=tipo_dte.value,
             folio=folio,
             rut_receptor=rut_receptor_xml,
@@ -178,6 +183,7 @@ class DteService:
         
         # Log de generación
         log = SiiLog(
+            empresa_id=empresa.id if empresa and empresa.id is not None else None,
             operacion="GENERACION",
             request_data=f"Folio: {folio}, Monto: {monto_total}",
             status_code=200
@@ -191,7 +197,7 @@ class DteService:
         return dte_db
 
     @staticmethod
-    async def enviar_boleta(session: AsyncSession, dte_id: int) -> Dte:
+    async def enviar_boleta(session: AsyncSession, dte_id: int, empresa: Empresa | None = None) -> Dte:
         """
         Toma un DTE generado, lo envuelve en un EnvioDTE, lo firma y lo envía al SII.
         """
@@ -204,17 +210,23 @@ class DteService:
 
         # Guardrail suave: no bloquear por una combinación específica de
         # resolución, ya que en certificación SII puede ser válida.
-        if not settings.sii_fecha_resolucion:
+        if empresa is not None and not empresa.sii_fecha_resolucion:
+            raise BusinessValidationError(
+                "SII_FECHA_RESOLUCION es obligatoria para construir la carátula del envío.",
+                field="sii_fecha_resolucion",
+            )
+
+        if empresa is None and not settings.sii_fecha_resolucion:
             raise BusinessValidationError(
                 "SII_FECHA_RESOLUCION es obligatoria para construir la carátula del envío.",
                 field="sii_fecha_resolucion",
             )
 
         # 1. Construir EnvioDTE (Sobre)
-        envio_xml_sin_firma = XmlBuilderService.build_envio_dte([dte.xml_documento])
+        envio_xml_sin_firma = XmlBuilderService.build_envio_dte([dte.xml_documento], empresa=empresa)
 
         # 2. Firmar el EnvioDTE
-        cert_data = load_pfx_from_settings()
+        cert_data = load_pfx_from_empresa(empresa) if empresa is not None else load_pfx_from_settings()
         DteService._assert_sender_rut_matches_certificate(cert_data)
         envio_xml_firmado = XmlSignerService.sign_document(
             envio_xml_sin_firma, 
@@ -264,7 +276,7 @@ class DteService:
         dte.xml_envio = envio_xml_firmado
 
         # 3. Autenticación y Upload
-        token = await token_service.get_valid_token()
+        token = await token_service.get_valid_token(empresa=empresa)
         uploader = UploadClient()
 
         # Una respuesta típica: <RECEPCIONDTE><STATUS>0</STATUS><TRACKID>123456</TRACKID></RECEPCIONDTE>
@@ -272,8 +284,8 @@ class DteService:
             response_xml = await uploader.upload_dte(
                 token=token,
                 xml_content=envio_xml_firmado,
-                rut_emisor=settings.rut_envia,
-                rut_empresa=settings.rut_emisor
+                rut_emisor=(empresa.rut_envia if empresa is not None else settings.rut_envia),
+                rut_empresa=(empresa.rut_emisor if empresa is not None else settings.rut_emisor)
             )
 
             root = etree.fromstring(response_xml.encode("utf-8"))
@@ -284,6 +296,7 @@ class DteService:
                 dte.track_id = track_id
                 dte.estado = EstadoDte.ENVIADO
                 log = SiiLog(
+                    empresa_id=empresa.id if empresa and empresa.id is not None else None,
                     dte_id=dte.id,
                     operacion="UPLOAD",
                     request_data=envio_xml_firmado,

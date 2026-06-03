@@ -20,10 +20,12 @@ from app.clients.seed_client import SeedClient
 from app.clients.token_client import TokenClient
 from app.config import get_settings
 from app.domain.exceptions import SiiAuthError
+from app.domain.models import Empresa
 from app.infrastructure.certificate import (
     CertificateData, 
     load_pfx_from_settings,
-    load_pfx_from_file
+    load_pfx_from_file,
+    load_pfx_from_empresa,
 )
 
 logger = structlog.get_logger(__name__)
@@ -48,16 +50,21 @@ class TokenService:
         self.token_client = TokenClient()
         self._lock = asyncio.Lock()
         
-        self._cached_token: str | None = None
-        self._token_expires_at: datetime | None = None
-        
-        self._cert_data: CertificateData | None = None
+        self._cached_tokens: dict[str, str] = {}
+        self._token_expires_at: dict[str, datetime] = {}
+        self._cert_data_cache: dict[str, CertificateData] = {}
 
-    def _get_cert(self) -> CertificateData:
+    def _cache_key(self, empresa: Empresa | None = None) -> str:
+        return f"empresa:{empresa.id}" if empresa and empresa.id is not None else "default"
+
+    def _get_cert(self, empresa: Empresa | None = None) -> CertificateData:
         """Carga el certificado bajo demanda."""
-        if self._cert_data is None:
-            self._cert_data = load_pfx_from_settings()
-        return self._cert_data
+        cache_key = self._cache_key(empresa)
+        if cache_key not in self._cert_data_cache:
+            self._cert_data_cache[cache_key] = (
+                load_pfx_from_empresa(empresa) if empresa is not None else load_pfx_from_settings()
+            )
+        return self._cert_data_cache[cache_key]
 
     def _parse_xml_value(self, xml_string: str, tag_name: str, default: str | None = None) -> str:
         """Extrae un valor de texto de un tag específico en el XML del SII."""
@@ -81,10 +88,10 @@ class TokenService:
         except etree.XMLSyntaxError as e:
             raise SiiAuthError(f"Error parseando respuesta XML del SII: {str(e)}") from e
 
-    def _sign_seed(self, seed_xml_str: str, cert_data: CertificateData | None = None) -> str:
+    def _sign_seed(self, seed_xml_str: str, cert_data: CertificateData | None = None, empresa: Empresa | None = None) -> str:
         """Firma el XML de la semilla con el certificado usando XMLDSIG."""
         if cert_data is None:
-            cert_data = self._get_cert()
+            cert_data = self._get_cert(empresa)
         
         try:
             # Recreamos la estructura que el SII espera que firmemos.
@@ -156,18 +163,19 @@ class TokenService:
         except Exception as e:
             raise SiiAuthError(f"Error al firmar la semilla: {str(e)}") from e
 
-    async def get_valid_token(self, force_refresh: bool = False) -> str:
+    async def get_valid_token(self, force_refresh: bool = False, empresa: Empresa | None = None) -> str:
         """
         Obtiene un token válido. Retorna el cacheado si aún está vigente.
         """
         async with self._lock:
+            cache_key = self._cache_key(empresa)
             now = datetime.now(timezone.utc)
             
             # Si hay token y no expiró (y no forzamos), lo retornamos
-            if not force_refresh and self._cached_token and self._token_expires_at:
-                if now < self._token_expires_at:
+            if not force_refresh and cache_key in self._cached_tokens and cache_key in self._token_expires_at:
+                if now < self._token_expires_at[cache_key]:
                     logger.debug("Usando token SII en cache")
-                    return self._cached_token
+                    return self._cached_tokens[cache_key]
 
             logger.info("Obteniendo nuevo token SII")
             
@@ -176,7 +184,7 @@ class TokenService:
             
             # 2. Extraer y Firmar Semilla
             import signxml # local import para prevenir problemas si falla global
-            signed_seed_xml = self._sign_seed(seed_xml_response)
+            signed_seed_xml = self._sign_seed(seed_xml_response, empresa=empresa)
             
             # 3. Obtener Token
             token_xml_response = await self.token_client.get_token(signed_seed_xml)
@@ -211,12 +219,12 @@ class TokenService:
                 raise SiiAuthError(f"Rechazo del SII. Estado: {estado} - Glosa: {glosa}. Verifica tu clave y certificado.")
             
             # 5. Guardar en cache
-            self._cached_token = token_value
-            self._token_expires_at = now + timedelta(minutes=settings.sii_token_ttl_minutes)
+            self._cached_tokens[cache_key] = token_value
+            self._token_expires_at[cache_key] = now + timedelta(minutes=settings.sii_token_ttl_minutes)
             
             logger.info(
                 "Token SII obtenido exitosamente",
-                expires_at=self._token_expires_at.isoformat()
+                expires_at=self._token_expires_at[cache_key].isoformat()
             )
             
             return token_value

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.api.deps import get_api_key, get_db_session
+from app.api.deps import get_api_key, get_current_empresa, get_db_session
 from app.domain.models import Caf
 from app.services.caf_service import CafService
 
@@ -19,6 +19,7 @@ router = APIRouter()
 async def upload_caf(
     file: UploadFile,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """
@@ -36,6 +37,7 @@ async def upload_caf(
         
         # Guardar en DB
         nuevo_caf = Caf(
+            empresa_id=empresa.id,
             tipo_dte=caf_info["tipo_dte"],
             rango_desde=caf_info["rango"]["desde"],
             rango_hasta=caf_info["rango"]["hasta"],
@@ -66,10 +68,15 @@ async def upload_caf(
 async def status_caf(
     tipo_dte: int = 39,
     db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
     _: str = Depends(get_api_key),
 ):
     """Verifica la cantidad de folios disponibles para un tipo de documento."""
-    stmt = select(Caf).where(Caf.tipo_dte == tipo_dte, Caf.activo == True).order_by(Caf.id.asc())
+    stmt = select(Caf).where(
+        Caf.tipo_dte == tipo_dte,
+        Caf.activo == True,
+        Caf.empresa_id == empresa.id,
+    ).order_by(Caf.id.asc())
     result = await db.execute(stmt)
     cafs = result.scalars().all()
     

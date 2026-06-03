@@ -68,44 +68,38 @@ class CertificateData:
         return self.certificate.public_bytes(serialization.Encoding.PEM)
 
 
-def load_pfx_from_settings() -> CertificateData:
-    """
-    Carga un archivo PKCS#12 (.pfx) extrae clave privada + certificado.
-    Prioriza leer desde la variable en Base64 (Cloud/Railway), y hace 
-    fallback a leer el archivo físico (Desarrollo Local).
-    """
-    from app.config import get_settings
-    settings = get_settings()
-
+def _load_pfx_from_source(
+    *,
+    base64_value: str | None,
+    path_value: str | None,
+    password_value: str | None,
+) -> CertificateData:
     import os
+
     pfx_bytes: bytes | None = None
 
-    # Búsqueda ultra-flexible para ignorar espacios invisibles en el nombre de la variable
     raw_base64 = None
     for key, value in os.environ.items():
         if "CERT_PFX_BASE" in key:
             raw_base64 = value
             break
-            
-    raw_base64 = raw_base64 or settings.cert_pfx_base64
+
+    raw_base64 = raw_base64 or base64_value
 
     if raw_base64 is not None:
         if not raw_base64.strip():
-            raise CertificateError("La variable CERT_PFX_BASE64 existe en Railway pero está VACÍA (0 caracteres validos). Vuelve a copiarla.")
-            
+            raise CertificateError("La variable CERT_PFX_BASE64 existe pero está vacía.")
+
         import base64
+
         try:
             pfx_bytes = base64.b64decode(raw_base64)
         except Exception as e:
-            raise CertificateError(f"Error decodificando CERT_PFX_BASE64: {str(e)}")
-    elif settings.cert_pfx_path:
-        path = Path(settings.cert_pfx_path).resolve()
+            raise CertificateError(f"Error decodificando CERT_PFX_BASE64: {str(e)}") from e
+    elif path_value:
+        path = Path(path_value).resolve()
         if not path.exists():
-            # Error ultra detallado para saber exactamente por qué entró aquí
-            raise CertificateNotFoundError(
-                f"No se detectó la variable CERT_PFX_BASE64 en el sistema operativo. "
-                f"El servidor hizo fallback a buscar el archivo físico pero falló: {str(path)}"
-            )
+            raise CertificateNotFoundError(str(path))
         pfx_bytes = path.read_bytes()
     else:
         raise CertificateError("No se configuró CERT_PFX_BASE64 ni CERT_PFX_PATH")
@@ -113,20 +107,16 @@ def load_pfx_from_settings() -> CertificateData:
     try:
         private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
             pfx_bytes,
-            settings.cert_pfx_password.encode("utf-8") if settings.cert_pfx_password else None,
+            password_value.encode("utf-8") if password_value else None,
         )
     except ValueError as e:
         if "password" in str(e).lower() or "mac" in str(e).lower():
             raise CertificatePasswordError() from e
         raise
 
-    if private_key is None:
+    if private_key is None or certificate is None:
         raise CertificatePasswordError()
 
-    if certificate is None:
-        raise CertificatePasswordError()
-
-    # Extraer metadatos del certificado
     subject = certificate.subject.rfc4514_string()
     issuer = certificate.issuer.rfc4514_string()
 
@@ -141,11 +131,8 @@ def load_pfx_from_settings() -> CertificateData:
         not_valid_after=certificate.not_valid_after_utc,
     )
 
-    # Advertir si está próximo a expirar
     if cert_data.is_expired:
-        raise CertificateExpiredError(
-            cert_data.not_valid_after.isoformat()
-        )
+        raise CertificateExpiredError(cert_data.not_valid_after.isoformat())
 
     if cert_data.days_until_expiry < 30:
         logger.warning(
@@ -162,6 +149,33 @@ def load_pfx_from_settings() -> CertificateData:
     )
 
     return cert_data
+
+
+def load_pfx_from_settings() -> CertificateData:
+    """
+    Carga un archivo PKCS#12 (.pfx) extrae clave privada + certificado.
+    Prioriza leer desde la variable en Base64 (Cloud/Railway), y hace 
+    fallback a leer el archivo físico (Desarrollo Local).
+    """
+    from app.config import get_settings
+    settings = get_settings()
+    return _load_pfx_from_source(
+        base64_value=settings.cert_pfx_base64,
+        path_value=settings.cert_pfx_path,
+        password_value=settings.cert_pfx_password,
+    )
+
+
+def load_pfx_from_empresa(empresa) -> CertificateData:
+    """Carga el certificado definido por una empresa concreta, con fallback al .env."""
+    from app.config import get_settings
+
+    settings = get_settings()
+    return _load_pfx_from_source(
+        base64_value=getattr(empresa, "cert_pfx_base64", None) or settings.cert_pfx_base64,
+        path_value=getattr(empresa, "cert_pfx_path", None) or settings.cert_pfx_path,
+        password_value=getattr(empresa, "cert_pfx_password", None) or settings.cert_pfx_password,
+    )
 def load_pfx_from_file(pfx_path: str, password: str) -> CertificateData:
     """
     Carga un archivo PFX desde una ruta local con una contraseña dada.

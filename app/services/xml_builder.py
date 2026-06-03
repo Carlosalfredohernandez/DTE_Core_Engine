@@ -13,6 +13,7 @@ from lxml import etree
 
 from app.config import get_settings
 from app.domain.enums import TipoDte
+from app.domain.models import Empresa
 from app.services.caf_service import CafInfo, CafService
 
 settings = get_settings()
@@ -23,13 +24,21 @@ class XmlBuilderService:
     """Constructor del XML del DTE respetando schemas del SII."""
 
     @staticmethod
+    def _value(empresa: Empresa | None, attr: str, default: Any) -> Any:
+        if empresa is None:
+            return default
+        value = getattr(empresa, attr, None)
+        return default if value is None else value
+
+    @staticmethod
     def build_boleta_xml(
         folio: int,
         fecha_emision: datetime.date,
         tipo_dte: TipoDte,
         receptor: dict[str, Any] | None,
         detalles: list[dict[str, Any]],
-        caf_info: CafInfo
+        caf_info: CafInfo,
+        empresa: Empresa | None = None,
     ) -> str:
         """
         Construye el XML para una Boleta Electrónica (39 o 41).
@@ -81,11 +90,11 @@ class XmlBuilderService:
         
         # Emisor
         emisor = etree.SubElement(encabezado, "Emisor")
-        etree.SubElement(emisor, "RUTEmisor").text = settings.rut_emisor
-        etree.SubElement(emisor, "RznSocEmisor").text = settings.razon_social_emisor
-        etree.SubElement(emisor, "GiroEmisor").text = settings.giro_emisor
-        etree.SubElement(emisor, "DirOrigen").text = settings.dir_origen
-        etree.SubElement(emisor, "CmnaOrigen").text = settings.cmna_origen
+        etree.SubElement(emisor, "RUTEmisor").text = str(XmlBuilderService._value(empresa, "rut_emisor", settings.rut_emisor))
+        etree.SubElement(emisor, "RznSocEmisor").text = str(XmlBuilderService._value(empresa, "razon_social_emisor", settings.razon_social_emisor))
+        etree.SubElement(emisor, "GiroEmisor").text = str(XmlBuilderService._value(empresa, "giro_emisor", settings.giro_emisor))
+        etree.SubElement(emisor, "DirOrigen").text = str(XmlBuilderService._value(empresa, "dir_origen", settings.dir_origen))
+        etree.SubElement(emisor, "CmnaOrigen").text = str(XmlBuilderService._value(empresa, "cmna_origen", settings.cmna_origen))
         
         # Receptor (Opcional en boletas, pero recomendado)
         receptor_el = etree.SubElement(encabezado, "Receptor")
@@ -121,7 +130,7 @@ class XmlBuilderService:
         # ni whitespace-only text nodes, por lo que aquí solo construimos
         # el árbol tributario normal y delegamos la serialización exacta.
         dd = etree.Element("DD")
-        etree.SubElement(dd, "RE").text = settings.rut_emisor
+        etree.SubElement(dd, "RE").text = str(XmlBuilderService._value(empresa, "rut_emisor", settings.rut_emisor))
         etree.SubElement(dd, "TD").text = str(tipo_dte.value)
         etree.SubElement(dd, "F").text = str(folio)
         etree.SubElement(dd, "FE").text = fecha_emision.strftime("%Y-%m-%d")
@@ -173,7 +182,7 @@ class XmlBuilderService:
         return xml_string
 
     @staticmethod
-    def build_envio_dte(xml_documentos_firmados: list[str]) -> str:
+    def build_envio_dte(xml_documentos_firmados: list[str], empresa: Empresa | None = None) -> str:
         """
         Construye el Sobre (EnvioBOLETA) definitivo con carátula completa.
         """
@@ -188,16 +197,18 @@ class XmlBuilderService:
         # xsi:schemaLocation es obligatorio: sin él el SII devuelve SCH-00001: Invalid Schema Name
         root.set(f"{{{xsi_ns}}}schemaLocation", f"{sii_ns} EnvioBOLETA_v11.xsd")
         
-        rut_limpio = settings.rut_emisor.replace(".", "")
+        rut_emisor = str(XmlBuilderService._value(empresa, "rut_emisor", settings.rut_emisor))
+        rut_envia = str(XmlBuilderService._value(empresa, "rut_envia", settings.rut_envia))
+        rut_limpio = rut_emisor.replace(".", "")
         
         set_dte = etree.SubElement(root, "SetDTE", ID="SetDoc")
         caratula = etree.SubElement(set_dte, "Caratula", version="1.0")
         
         etree.SubElement(caratula, "RutEmisor").text = rut_limpio
-        etree.SubElement(caratula, "RutEnvia").text = settings.rut_envia.replace(".", "")
+        etree.SubElement(caratula, "RutEnvia").text = rut_envia.replace(".", "")
         etree.SubElement(caratula, "RutReceptor").text = "60803000-K"
-        etree.SubElement(caratula, "FchResol").text = settings.sii_fecha_resolucion
-        etree.SubElement(caratula, "NroResol").text = str(settings.sii_numero_resolucion)
+        etree.SubElement(caratula, "FchResol").text = str(XmlBuilderService._value(empresa, "sii_fecha_resolucion", settings.sii_fecha_resolucion))
+        etree.SubElement(caratula, "NroResol").text = str(XmlBuilderService._value(empresa, "sii_numero_resolucion", settings.sii_numero_resolucion))
         etree.SubElement(caratula, "TmstFirmaEnv").text = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         
         # El SubTotDTE es obligatorio en muchos validadores de boletas
