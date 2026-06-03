@@ -17,10 +17,12 @@ from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from app.domain.exceptions import (
+    CertificateError,
     CertificateExpiredError,
     CertificateNotFoundError,
     CertificatePasswordError,
 )
+from app.infrastructure.secrets import decrypt_secret
 
 import structlog
 
@@ -73,6 +75,7 @@ def _load_pfx_from_source(
     base64_value: str | None,
     path_value: str | None,
     password_value: str | None,
+    master_key: str | None,
 ) -> CertificateData:
     import os
 
@@ -85,6 +88,8 @@ def _load_pfx_from_source(
             break
 
     raw_base64 = raw_base64 or base64_value
+    raw_base64 = decrypt_secret(raw_base64, master_key)
+    password_value = decrypt_secret(password_value, master_key)
 
     if raw_base64 is not None:
         if not raw_base64.strip():
@@ -163,6 +168,7 @@ def load_pfx_from_settings() -> CertificateData:
         base64_value=settings.cert_pfx_base64,
         path_value=settings.cert_pfx_path,
         password_value=settings.cert_pfx_password,
+        master_key=settings.cert_master_key,
     )
 
 
@@ -175,6 +181,7 @@ def load_pfx_from_empresa(empresa) -> CertificateData:
         base64_value=getattr(empresa, "cert_pfx_base64", None) or settings.cert_pfx_base64,
         path_value=getattr(empresa, "cert_pfx_path", None) or settings.cert_pfx_path,
         password_value=getattr(empresa, "cert_pfx_password", None) or settings.cert_pfx_password,
+        master_key=settings.cert_master_key,
     )
 def load_pfx_from_file(pfx_path: str, password: str) -> CertificateData:
     """

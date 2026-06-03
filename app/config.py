@@ -66,9 +66,11 @@ class Settings(BaseSettings):
     cert_pfx_path: str | None = "./certs/certificado.pfx"
     cert_pfx_base64: str | None = None
     cert_pfx_password: str = ""
+    cert_master_key: str | None = None
 
     # ── Seguridad API ─────────────────────────────────────────────────────
     api_key: str = "Vikingo80"
+    dashboard_password: str | None = None
     jwt_secret_key: str = "Vikingo80"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
