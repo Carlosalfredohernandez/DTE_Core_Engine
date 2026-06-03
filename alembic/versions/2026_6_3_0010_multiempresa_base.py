@@ -20,43 +20,62 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "empresas",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("rut_emisor", sa.String(length=12), nullable=False),
-        sa.Column("rut_envia", sa.String(length=12), nullable=False),
-        sa.Column("razon_social_emisor", sa.String(length=150), nullable=False),
-        sa.Column("giro_emisor", sa.String(length=150), nullable=False),
-        sa.Column("acteco_emisor", sa.Integer(), nullable=False),
-        sa.Column("dir_origen", sa.String(length=200), nullable=False),
-        sa.Column("cmna_origen", sa.String(length=100), nullable=False),
-        sa.Column("ciudad_origen", sa.String(length=100), nullable=False),
-        sa.Column("sii_ambiente", sa.String(length=20), nullable=False),
-        sa.Column("sii_fecha_resolucion", sa.String(length=10), nullable=False),
-        sa.Column("sii_numero_resolucion", sa.Integer(), nullable=False),
-        sa.Column("brand_name", sa.String(length=150), nullable=True),
-        sa.Column("brand_logo_url", sa.String(length=500), nullable=True),
-        sa.Column("brand_accent_1", sa.String(length=20), nullable=True),
-        sa.Column("brand_accent_2", sa.String(length=20), nullable=True),
-        sa.Column("api_key", sa.String(length=120), nullable=True),
-        sa.Column("cert_pfx_path", sa.String(length=255), nullable=True),
-        sa.Column("cert_pfx_base64", sa.Text(), nullable=True),
-        sa.Column("cert_pfx_password", sa.String(length=255), nullable=True),
-        sa.Column("es_default", sa.Boolean(), nullable=False),
-        sa.Column("activo", sa.Boolean(), nullable=False),
-        sa.Column("fecha_creacion", sa.DateTime(), nullable=True),
-        sa.Column("fecha_actualizacion", sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("api_key"),
-    )
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    table_names = set(inspector.get_table_names())
 
-    op.add_column("cafs", sa.Column("empresa_id", sa.Integer(), nullable=True))
-    op.add_column("dtes", sa.Column("empresa_id", sa.Integer(), nullable=True))
-    op.add_column("sii_log", sa.Column("empresa_id", sa.Integer(), nullable=True))
+    if "empresas" not in table_names:
+        op.create_table(
+            "empresas",
+            sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+            sa.Column("rut_emisor", sa.String(length=12), nullable=False),
+            sa.Column("rut_envia", sa.String(length=12), nullable=False),
+            sa.Column("razon_social_emisor", sa.String(length=150), nullable=False),
+            sa.Column("giro_emisor", sa.String(length=150), nullable=False),
+            sa.Column("acteco_emisor", sa.Integer(), nullable=False),
+            sa.Column("dir_origen", sa.String(length=200), nullable=False),
+            sa.Column("cmna_origen", sa.String(length=100), nullable=False),
+            sa.Column("ciudad_origen", sa.String(length=100), nullable=False),
+            sa.Column("sii_ambiente", sa.String(length=20), nullable=False),
+            sa.Column("sii_fecha_resolucion", sa.String(length=10), nullable=False),
+            sa.Column("sii_numero_resolucion", sa.Integer(), nullable=False),
+            sa.Column("brand_name", sa.String(length=150), nullable=True),
+            sa.Column("brand_logo_url", sa.String(length=500), nullable=True),
+            sa.Column("brand_accent_1", sa.String(length=20), nullable=True),
+            sa.Column("brand_accent_2", sa.String(length=20), nullable=True),
+            sa.Column("api_key", sa.String(length=120), nullable=True),
+            sa.Column("cert_pfx_path", sa.String(length=255), nullable=True),
+            sa.Column("cert_pfx_base64", sa.Text(), nullable=True),
+            sa.Column("cert_pfx_password", sa.String(length=255), nullable=True),
+            sa.Column("es_default", sa.Boolean(), nullable=False),
+            sa.Column("activo", sa.Boolean(), nullable=False),
+            sa.Column("fecha_creacion", sa.DateTime(), nullable=True),
+            sa.Column("fecha_actualizacion", sa.DateTime(), nullable=True),
+            sa.PrimaryKeyConstraint("id"),
+            sa.UniqueConstraint("api_key"),
+        )
 
-    op.create_foreign_key("fk_cafs_empresas", "cafs", "empresas", ["empresa_id"], ["id"])
-    op.create_foreign_key("fk_dtes_empresas", "dtes", "empresas", ["empresa_id"], ["id"])
-    op.create_foreign_key("fk_sii_log_empresas", "sii_log", "empresas", ["empresa_id"], ["id"])
+    caf_columns = {c["name"] for c in inspector.get_columns("cafs")}
+    dte_columns = {c["name"] for c in inspector.get_columns("dtes")}
+    log_columns = {c["name"] for c in inspector.get_columns("sii_log")}
+
+    if "empresa_id" not in caf_columns:
+        op.add_column("cafs", sa.Column("empresa_id", sa.Integer(), nullable=True))
+    if "empresa_id" not in dte_columns:
+        op.add_column("dtes", sa.Column("empresa_id", sa.Integer(), nullable=True))
+    if "empresa_id" not in log_columns:
+        op.add_column("sii_log", sa.Column("empresa_id", sa.Integer(), nullable=True))
+
+    caf_fks = {fk.get("name") for fk in inspector.get_foreign_keys("cafs")}
+    dte_fks = {fk.get("name") for fk in inspector.get_foreign_keys("dtes")}
+    log_fks = {fk.get("name") for fk in inspector.get_foreign_keys("sii_log")}
+
+    if "fk_cafs_empresas" not in caf_fks:
+        op.create_foreign_key("fk_cafs_empresas", "cafs", "empresas", ["empresa_id"], ["id"])
+    if "fk_dtes_empresas" not in dte_fks:
+        op.create_foreign_key("fk_dtes_empresas", "dtes", "empresas", ["empresa_id"], ["id"])
+    if "fk_sii_log_empresas" not in log_fks:
+        op.create_foreign_key("fk_sii_log_empresas", "sii_log", "empresas", ["empresa_id"], ["id"])
 
 
 def downgrade() -> None:

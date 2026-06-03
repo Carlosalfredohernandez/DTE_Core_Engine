@@ -20,10 +20,18 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column("empresas", sa.Column("brand_name", sa.String(length=150), nullable=True))
-    op.add_column("empresas", sa.Column("brand_logo_url", sa.String(length=500), nullable=True))
-    op.add_column("empresas", sa.Column("brand_accent_1", sa.String(length=20), nullable=True))
-    op.add_column("empresas", sa.Column("brand_accent_2", sa.String(length=20), nullable=True))
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    empresa_columns = {c["name"] for c in inspector.get_columns("empresas")}
+
+    if "brand_name" not in empresa_columns:
+        op.add_column("empresas", sa.Column("brand_name", sa.String(length=150), nullable=True))
+    if "brand_logo_url" not in empresa_columns:
+        op.add_column("empresas", sa.Column("brand_logo_url", sa.String(length=500), nullable=True))
+    if "brand_accent_1" not in empresa_columns:
+        op.add_column("empresas", sa.Column("brand_accent_1", sa.String(length=20), nullable=True))
+    if "brand_accent_2" not in empresa_columns:
+        op.add_column("empresas", sa.Column("brand_accent_2", sa.String(length=20), nullable=True))
 
 
 def downgrade() -> None:
