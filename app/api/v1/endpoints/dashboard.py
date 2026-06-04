@@ -1072,12 +1072,13 @@ async def dashboard() -> HTMLResponse:
 
       <section class="card span-4" id="section-cert">
         <div class="card-header"><h2>Certificado</h2><button class="card-toggle" data-collapse="section-cert">Ocultar</button></div>
-        <div class="sub card-body">Convierte un .pfx a base64 para Railway o úsalo como archivo local.</div>
+        <div class="sub card-body">Recomendado en multiempresa: subir el .pfx a la empresa activa sin copiar/pegar. Base64 queda como opción legacy.</div>
         <input class="input card-body" type="file" id="pfxFile" accept=".pfx" />
         <div style="height:12px" class="card-body"></div>
         <input class="input card-body" id="pfxPassword" placeholder="Contraseña del .pfx" />
         <div class="actions card-body" style="margin-top:12px;">
-          <button class="btn" data-op="pfx-upload">Generar Base64</button>
+          <button class="btn" data-op="pfx-upload-empresa">Guardar en empresa activa</button>
+          <button class="btn secondary" data-op="pfx-upload">Generar Base64 (legacy)</button>
         </div>
         <div class="result" id="result-pfx"></div>
       </section>
@@ -1956,10 +1957,24 @@ async def dashboard() -> HTMLResponse:
           case 'pfx-upload': {
             const file = $('pfxFile').files[0];
             if (!file) throw { status: 0, data: 'Selecciona un archivo PFX.' };
+            const password = $('pfxPassword').value;
+            if (!password) throw { status: 0, data: 'Ingresa la contraseña del .pfx.' };
             const form = new FormData();
             form.append('file', file);
-            form.append('password', $('pfxPassword').value);
+            form.append('password', password);
             data = await fetchJson('/api/v1/cert/upload', { method: 'POST', body: form });
+            break;
+          }
+          case 'pfx-upload-empresa': {
+            const file = $('pfxFile').files[0];
+            if (!file) throw { status: 0, data: 'Selecciona un archivo PFX.' };
+            const password = $('pfxPassword').value;
+            if (!password) throw { status: 0, data: 'Ingresa la contraseña del .pfx.' };
+            const form = new FormData();
+            form.append('file', file);
+            form.append('password', password);
+            data = await fetchJson('/api/v1/cert/upload/empresa', { method: 'POST', body: form });
+            await loadEmpresas(empresasState.selectedId || null).catch(() => {});
             break;
           }
           case 'boleta-generar':
