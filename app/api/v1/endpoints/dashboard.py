@@ -331,7 +331,7 @@ async def dashboard_list_empresas(
 
     items.append(
       DashboardEmpresaItem(
-        **_empresa_to_item(empresa).model_dump(),
+        **_empresa_to_item(empresa).model_dump(exclude={"caf_count", "has_cert", "ready", "estado_operativo"}),
         caf_count=int(caf_count or 0),
         has_cert=has_cert,
         ready=ready,
