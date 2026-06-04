@@ -1684,6 +1684,7 @@ async def dashboard() -> HTMLResponse:
       const form = new FormData();
       form.append('file', file);
       const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/caf`, { method: 'POST', body: form });
+      await loadEmpresas(empresaId);
       setResult('result-empresas', data, true);
       setConsole('CAF cargado para empresa.', true);
       showToast('CAF cargado', 'El CAF se guardó para la empresa seleccionada.', 'success');
@@ -1701,9 +1702,18 @@ async def dashboard() -> HTMLResponse:
       form.append('file', file);
       form.append('password', password);
       const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/cert`, { method: 'POST', body: form });
+      await loadEmpresas(empresaId);
       setResult('result-empresas', data, true);
       setConsole('Certificado guardado para empresa.', true);
       showToast('Certificado cargado', 'El certificado quedó asociado a la empresa.', 'success');
+    }
+
+    function handleEmpresasError(error) {
+      const payload = error && error.data ? error.data : error;
+      const message = typeof payload === 'string' ? payload : (payload?.detail || JSON.stringify(payload, null, 2));
+      setResult('result-empresas', payload, false);
+      setConsole(`Empresas: ${message}`, false);
+      showToast('Error en empresas', message, 'error');
     }
 
     function wireSidebar() {
@@ -2012,18 +2022,18 @@ async def dashboard() -> HTMLResponse:
     $('btnHistoryNext').addEventListener('click', () => { if (historyState.page < historyState.lastPage) loadHistory(historyState.page + 1); });
     $('btnHistoryRefresh').addEventListener('click', () => loadHistory(historyState.page));
     $('historyPageSize').addEventListener('change', () => loadHistory(1));
-    $('btnEmpresasLoad').addEventListener('click', () => loadEmpresas().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresasLoad').addEventListener('click', () => loadEmpresas().catch(handleEmpresasError));
     $('btnEmpresaNuevo').addEventListener('click', clearEmpresaForm);
-    $('btnEmpresaCrear').addEventListener('click', () => createEmpresa().catch((error) => setResult('result-empresas', error.data || error, false)));
-    $('btnEmpresaGuardar').addEventListener('click', () => updateEmpresa().catch((error) => setResult('result-empresas', error.data || error, false)));
-    $('btnEmpresaEliminar').addEventListener('click', () => deleteEmpresa().catch((error) => setResult('result-empresas', error.data || error, false)));
-    $('btnEmpresaReactivar').addEventListener('click', () => reactivateEmpresa().catch((error) => setResult('result-empresas', error.data || error, false)));
-    $('btnEmpresaRegenKey').addEventListener('click', () => regenerateEmpresaKey().catch((error) => setResult('result-empresas', error.data || error, false)));
-    $('btnEmpresaSubirCaf').addEventListener('click', () => uploadEmpresaCaf().catch((error) => setResult('result-empresas', error.data || error, false)));
-    $('btnEmpresaSubirCert').addEventListener('click', () => uploadEmpresaCert().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresaCrear').addEventListener('click', () => createEmpresa().catch(handleEmpresasError));
+    $('btnEmpresaGuardar').addEventListener('click', () => updateEmpresa().catch(handleEmpresasError));
+    $('btnEmpresaEliminar').addEventListener('click', () => deleteEmpresa().catch(handleEmpresasError));
+    $('btnEmpresaReactivar').addEventListener('click', () => reactivateEmpresa().catch(handleEmpresasError));
+    $('btnEmpresaRegenKey').addEventListener('click', () => regenerateEmpresaKey().catch(handleEmpresasError));
+    $('btnEmpresaSubirCaf').addEventListener('click', () => uploadEmpresaCaf().catch(handleEmpresasError));
+    $('btnEmpresaSubirCert').addEventListener('click', () => uploadEmpresaCert().catch(handleEmpresasError));
     $('empresaIncludeInactive').addEventListener('change', (event) => {
       empresasState.includeInactive = !!event.target.checked;
-      loadEmpresas(empresasState.selectedId).catch((error) => setResult('result-empresas', error.data || error, false));
+      loadEmpresas(empresasState.selectedId).catch(handleEmpresasError);
     });
     $('empresaSelector').addEventListener('change', (event) => {
       const id = Number(event.target.value || 0);
