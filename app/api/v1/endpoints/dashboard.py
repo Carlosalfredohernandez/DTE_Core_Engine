@@ -1078,7 +1078,7 @@ async def dashboard() -> HTMLResponse:
         <input class="input card-body" id="pfxPassword" placeholder="Contraseña del .pfx" />
         <div class="actions card-body" style="margin-top:12px;">
           <button class="btn" data-op="pfx-upload-empresa">Guardar en empresa activa</button>
-          <button class="btn secondary" data-op="pfx-upload">Generar Base64 (legacy)</button>
+          <button class="btn secondary" id="btnPfxLegacy" data-op="pfx-upload">Generar Base64 (legacy)</button>
         </div>
         <div class="result" id="result-pfx"></div>
       </section>
@@ -1435,6 +1435,13 @@ async def dashboard() -> HTMLResponse:
       }
     }
 
+    function updateLegacyCertVisibility() {
+      const legacyBtn = $('btnPfxLegacy');
+      if (!legacyBtn) return;
+      const multiempresaDetected = Array.isArray(empresasState.items) && empresasState.items.length > 0;
+      legacyBtn.style.display = multiempresaDetected ? 'none' : 'inline-flex';
+    }
+
     async function setEmpresaActiva(empresa, persist = true) {
       if (!empresa) return;
       empresasState.selectedId = empresa.id;
@@ -1603,6 +1610,7 @@ async def dashboard() -> HTMLResponse:
       renderTopEmpresaSelector();
       renderEmpresasTable();
       renderFlowChecklist();
+      updateLegacyCertVisibility();
       if (targetId) {
         focusSection('section-empresas');
         if (!restoredToastShown) {
@@ -2100,6 +2108,7 @@ async def dashboard() -> HTMLResponse:
     });
     wireSidebar();
     syncUi();
+    updateLegacyCertVisibility();
     run('health');
     loadHistory(1).catch(() => {});
     loadEmpresas().catch(() => {});
