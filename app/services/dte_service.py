@@ -168,7 +168,7 @@ class DteService:
 
         # Guardar el RUT receptor efectivo del XML para mantener consistencia
         # en consultas posteriores (QueryEstDte).
-        rut_receptor_xml = receptor.get("rut", "66666666-6") if receptor else "66666666-6"
+        rut_receptor_xml = DteService._normalize_rut(receptor.get("rut", "66666666-6") if receptor else "66666666-6")
         
         dte_db = Dte(
             empresa_id=empresa.id if empresa and empresa.id is not None else None,
