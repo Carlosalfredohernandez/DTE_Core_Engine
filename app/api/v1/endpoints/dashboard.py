@@ -700,8 +700,56 @@ async def dashboard() -> HTMLResponse:
       background: rgba(2, 8, 23, 0.72); padding: 14px; min-height: 88px; white-space: pre-wrap; word-break: break-word;
       color: #d9e8ff; overflow: auto;
     }
+    .result.loading {
+      opacity: 0.72;
+      position: relative;
+    }
+    .result.loading::after {
+      content: "";
+      position: absolute;
+      inset: auto 14px 14px auto;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.18);
+      border-top-color: var(--primary);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .result.ok { border-color: rgba(52, 211, 153, 0.35); }
     .result.err { border-color: rgba(251, 113, 133, 0.35); }
+    .toast-zone {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 70;
+      display: grid;
+      gap: 10px;
+      width: min(360px, calc(100vw - 36px));
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      border-radius: 16px;
+      padding: 12px 14px;
+      border: 1px solid rgba(148,163,184,0.18);
+      background: rgba(9, 16, 32, 0.96);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      color: var(--text);
+      display: grid;
+      gap: 4px;
+      animation: toast-in 0.2s ease-out;
+    }
+    .toast.success { border-color: rgba(52, 211, 153, 0.45); }
+    .toast.error { border-color: rgba(251, 113, 133, 0.45); }
+    .toast.info { border-color: rgba(101, 214, 255, 0.45); }
+    .toast-title { font-weight: 800; font-size: 13px; }
+    .toast-message { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    @keyframes toast-in {
+      from { transform: translateY(-8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
     .badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 7px 10px; background: rgba(255,255,255,0.06); color: var(--muted); font-size: 12px; }
     .status-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--warning); box-shadow: 0 0 0 4px rgba(251,191,36,0.12); }
     .topbar { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -726,6 +774,8 @@ async def dashboard() -> HTMLResponse:
       <div class="result" id="result-panel-lock" style="min-height: 48px; margin-top: 14px;"></div>
     </div>
   </div>
+
+  <div class="toast-zone" id="toastZone"></div>
 
   <div class="shell">
     <div class="topbar">
@@ -754,6 +804,7 @@ async def dashboard() -> HTMLResponse:
         <button class="nav-link" data-jump="section-tracking">Tracking</button>
         <button class="nav-link" data-jump="section-history">Historial</button>
         <button class="nav-link" data-jump="section-empresas">Empresas</button>
+        <button class="nav-link" data-jump="section-flow">Flujo guiado</button>
         <button class="nav-link" data-jump="section-console">Consola</button>
         <div class="helper">Atajo: cada bloque se puede colapsar para trabajar más rápido.</div>
       </aside>
@@ -878,6 +929,35 @@ async def dashboard() -> HTMLResponse:
       </div>
 
       <div class="result" id="result-empresas"></div>
+    </section>
+
+    <section class="card span-12" id="section-flow">
+      <div class="card-header"><h2>Flujo guiado</h2><button class="card-toggle" data-collapse="section-flow">Ocultar</button></div>
+      <div class="sub card-body">Sigue este orden para dejar una empresa lista: crear, cargar CAF, subir certificado y probar emisión.</div>
+      <div class="row-3 card-body">
+        <div class="metric" style="margin:0;">
+          <div class="label">Paso 1</div>
+          <div class="value" style="font-size:18px;">Crear o seleccionar empresa</div>
+          <div class="mini muted">Completa el formulario y guarda la empresa.</div>
+        </div>
+        <div class="metric" style="margin:0;">
+          <div class="label">Paso 2</div>
+          <div class="value" style="font-size:18px;">Subir CAF</div>
+          <div class="mini muted">Carga el XML de folios autorizados de esa empresa.</div>
+        </div>
+        <div class="metric" style="margin:0;">
+          <div class="label">Paso 3</div>
+          <div class="value" style="font-size:18px;">Subir certificado</div>
+          <div class="mini muted">Asocia el .pfx y su contraseña a la empresa.</div>
+        </div>
+      </div>
+      <div class="actions card-body" style="margin-top:12px;">
+        <button class="btn" id="btnFlowNewEmpresa">Ir a empresa</button>
+        <button class="btn secondary" id="btnFlowCaf">Ir a CAF</button>
+        <button class="btn secondary" id="btnFlowCert">Ir a certificado</button>
+        <button class="btn secondary" id="btnFlowEmitir">Ir a boleta</button>
+      </div>
+      <div class="result" id="result-flow">Selecciona un paso para moverte más rápido dentro del panel.</div>
     </section>
 
     <div class="grid">
@@ -1109,11 +1189,57 @@ async def dashboard() -> HTMLResponse:
       el.textContent = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2);
     }
 
+    function setResultLoading(target, message = 'Procesando...') {
+      const el = $(target);
+      if (!el) return;
+      el.className = 'result loading';
+      el.textContent = message;
+    }
+
+    function showToast(title, message, type = 'info', timeout = 4200) {
+      const zone = $('toastZone');
+      if (!zone) return;
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<div class="toast-title">${title}</div><div class="toast-message">${message}</div>`;
+      zone.appendChild(toast);
+      window.setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-8px)';
+        toast.style.transition = 'all 0.2s ease';
+        window.setTimeout(() => toast.remove(), 220);
+      }, timeout);
+    }
+
+    function setBusy(isBusy) {
+      document.querySelectorAll('button').forEach((button) => {
+        if (button.id === 'btnPanelLogin') return;
+        if (isBusy) {
+          button.dataset.prevDisabled = button.disabled ? '1' : '0';
+          button.disabled = true;
+        } else if (button.dataset.prevDisabled === '0') {
+          button.disabled = false;
+        }
+      });
+    }
+
     function saveKey() {
       state.apiKey = $('apiKey').value.trim();
       localStorage.setItem('dte_api_key', state.apiKey);
       syncUi();
       setConsole('API Key guardada localmente.');
+    }
+
+    function jumpToSection(sectionId, message = '') {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        section.classList.remove('collapsed');
+      }
+      if (message) {
+        setResult('result-flow', message, true);
+        showToast('Flujo guiado', message, 'info');
+      }
     }
 
     function empresaPayloadFromForm() {
@@ -1214,6 +1340,7 @@ async def dashboard() -> HTMLResponse:
     }
 
     async function loadEmpresas(selectId = null) {
+      setResultLoading('result-empresas', 'Cargando empresas...');
       const query = empresasState.includeInactive ? '?include_inactive=true' : '';
       const data = await fetchJson(`/api/v1/dashboard/empresas${query}`);
       empresasState.items = Array.isArray(data) ? data : [];
@@ -1230,25 +1357,31 @@ async def dashboard() -> HTMLResponse:
       }
       setResult('result-empresas', data, true);
       setConsole(data, true);
+      showToast('Empresas', 'Listado actualizado correctamente.', 'success');
     }
 
     async function createEmpresa() {
+      setResultLoading('result-empresas', 'Creando empresa...');
       const payload = empresaPayloadFromForm();
       const data = await fetchJson('/api/v1/dashboard/empresas', { method: 'POST', json: payload });
       await loadEmpresas(data.id);
       setConsole('Empresa creada correctamente.', true);
+      showToast('Empresa creada', `${data.razon_social_emisor} fue creada correctamente.`, 'success');
     }
 
     async function updateEmpresa() {
+      setResultLoading('result-empresas', 'Guardando cambios...');
       const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
       if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para guardar cambios.' };
       const payload = empresaPayloadFromForm();
       const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}`, { method: 'PUT', json: payload });
       await loadEmpresas(data.id);
       setConsole('Empresa actualizada correctamente.', true);
+      showToast('Empresa actualizada', `${data.razon_social_emisor} se guardó correctamente.`, 'success');
     }
 
     async function deleteEmpresa() {
+      setResultLoading('result-empresas', 'Desactivando empresa...');
       const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
       if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para eliminar.' };
       if (!window.confirm('Se desactivará la empresa seleccionada. ¿Deseas continuar?')) {
@@ -1259,27 +1392,33 @@ async def dashboard() -> HTMLResponse:
       await loadEmpresas();
       setResult('result-empresas', data, true);
       setConsole('Empresa desactivada correctamente.', true);
+      showToast('Empresa desactivada', 'La empresa quedó inactiva.', 'info');
     }
 
     async function reactivateEmpresa() {
+      setResultLoading('result-empresas', 'Reactivando empresa...');
       const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
       if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para reactivar.' };
       const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/reactivate`, { method: 'POST', json: {} });
       await loadEmpresas(data.id);
       setResult('result-empresas', data, true);
       setConsole('Empresa reactivada correctamente.', true);
+      showToast('Empresa reactivada', 'La empresa volvió a estar activa.', 'success');
     }
 
     async function regenerateEmpresaKey() {
+      setResultLoading('result-empresas', 'Regenerando API Key...');
       const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
       if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para regenerar API Key.' };
       const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/regenerate-key`, { method: 'POST', json: {} });
       await loadEmpresas(data.id);
       setResult('result-empresas', data, true);
       setConsole('API Key regenerada correctamente.', true);
+      showToast('API Key regenerada', 'Se generó una nueva clave para la empresa.', 'info');
     }
 
     async function uploadEmpresaCaf() {
+      setResultLoading('result-empresas', 'Subiendo CAF...');
       const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
       if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para subir CAF.' };
       const file = $('empresaCafFile').files[0];
@@ -1289,9 +1428,11 @@ async def dashboard() -> HTMLResponse:
       const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/caf`, { method: 'POST', body: form });
       setResult('result-empresas', data, true);
       setConsole('CAF cargado para empresa.', true);
+      showToast('CAF cargado', 'El CAF se guardó para la empresa seleccionada.', 'success');
     }
 
     async function uploadEmpresaCert() {
+      setResultLoading('result-empresas', 'Subiendo certificado...');
       const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
       if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para subir certificado.' };
       const file = $('empresaPfxFile').files[0];
@@ -1304,6 +1445,7 @@ async def dashboard() -> HTMLResponse:
       const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/cert`, { method: 'POST', body: form });
       setResult('result-empresas', data, true);
       setConsole('Certificado guardado para empresa.', true);
+      showToast('Certificado cargado', 'El certificado quedó asociado a la empresa.', 'success');
     }
 
     function wireSidebar() {
@@ -1511,6 +1653,8 @@ async def dashboard() -> HTMLResponse:
     }
 
     async function run(op) {
+      const target = op.startsWith('caf') ? 'result-caf' : op.startsWith('pfx') ? 'result-pfx' : op.startsWith('tracking') ? 'result-tracking' : op.startsWith('token') ? 'result-token' : 'result-boleta';
+      setResultLoading(target, 'Ejecutando acción...');
       try {
         let data;
         switch (op) {
@@ -1584,15 +1728,15 @@ async def dashboard() -> HTMLResponse:
           default:
             throw { status: 0, data: `Operación no soportada: ${op}` };
         }
-        const target = op.startsWith('caf') ? 'result-caf' : op.startsWith('pfx') ? 'result-pfx' : op.startsWith('tracking') ? 'result-tracking' : op.startsWith('token') ? 'result-token' : 'result-boleta';
         setResult(target, data, true);
         setConsole(data, true);
+        showToast('Acción completada', 'La operación se ejecutó correctamente.', 'success');
       } catch (error) {
         const payload = error && error.data ? error.data : error;
         const message = error && error.status ? `Error ${error.status}` : 'Error';
         setConsole(`${message}\n${typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2)}`, false);
-        const target = (error && error.opTarget) || 'result-console';
-        setResult(target, payload, false);
+        setResult((error && error.opTarget) || target, payload, false);
+        showToast('Error', typeof payload === 'string' ? payload : 'La operación falló.', 'error');
       }
     }
 
@@ -1632,6 +1776,10 @@ async def dashboard() -> HTMLResponse:
       const empresa = empresasState.items.find((item) => item.id === id);
       if (empresa) fillEmpresaForm(empresa);
     });
+    $('btnFlowNewEmpresa').addEventListener('click', () => jumpToSection('section-empresas', 'Completa el formulario y crea o selecciona una empresa.'));
+    $('btnFlowCaf').addEventListener('click', () => jumpToSection('section-empresas', 'Selecciona la empresa y sube su CAF desde aquí.'));
+    $('btnFlowCert').addEventListener('click', () => jumpToSection('section-empresas', 'Selecciona la empresa y sube su certificado digital.'));
+    $('btnFlowEmitir').addEventListener('click', () => jumpToSection('section-boleta', 'Cuando la empresa tenga CAF y certificado, prueba la emisión desde boleta.'));
     wireSidebar();
     syncUi();
     run('health');
