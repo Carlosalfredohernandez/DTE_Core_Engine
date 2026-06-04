@@ -1589,7 +1589,9 @@ async def dashboard() -> HTMLResponse:
         btn.addEventListener('click', () => {
           const id = Number(btn.dataset.empresaOpen || 0);
           const empresa = empresasState.items.find((item) => item.id === id);
-          if (empresa) fillEmpresaForm(empresa);
+          if (empresa) {
+            setEmpresaActiva(empresa).catch(handleEmpresasError);
+          }
         });
       });
     }
@@ -2074,14 +2076,16 @@ async def dashboard() -> HTMLResponse:
       empresasState.includeInactive = !!event.target.checked;
       loadEmpresas(empresasState.selectedId).catch(handleEmpresasError);
     });
-    $('empresaSelector').addEventListener('change', (event) => {
+    $('empresaSelector').addEventListener('change', async (event) => {
       const id = Number(event.target.value || 0);
       if (!id) {
         clearEmpresaForm();
         return;
       }
       const empresa = empresasState.items.find((item) => item.id === id);
-      if (empresa) fillEmpresaForm(empresa);
+      if (empresa) {
+        await setEmpresaActiva(empresa).catch(handleEmpresasError);
+      }
       renderFlowChecklist();
     });
     $('empresaActivaTop').addEventListener('change', async (event) => {
