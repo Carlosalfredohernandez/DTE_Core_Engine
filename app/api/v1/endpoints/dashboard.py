@@ -1073,6 +1073,9 @@ async def dashboard() -> HTMLResponse:
       <section class="card span-4" id="section-cert">
         <div class="card-header"><h2>Certificado</h2><button class="card-toggle" data-collapse="section-cert">Ocultar</button></div>
         <div class="sub card-body">Recomendado en multiempresa: subir el .pfx a la empresa activa sin copiar/pegar. Base64 queda como opción legacy.</div>
+        <div class="card-body" style="margin-top:0;">
+          <span class="pill" id="certModeBadge">Modo detectado: cargando...</span>
+        </div>
         <input class="input card-body" type="file" id="pfxFile" accept=".pfx" />
         <div style="height:12px" class="card-body"></div>
         <input class="input card-body" id="pfxPassword" placeholder="Contraseña del .pfx" />
@@ -1437,9 +1440,15 @@ async def dashboard() -> HTMLResponse:
 
     function updateLegacyCertVisibility() {
       const legacyBtn = $('btnPfxLegacy');
+      const modeBadge = $('certModeBadge');
       if (!legacyBtn) return;
       const multiempresaDetected = Array.isArray(empresasState.items) && empresasState.items.length > 0;
       legacyBtn.style.display = multiempresaDetected ? 'none' : 'inline-flex';
+      if (modeBadge) {
+        modeBadge.textContent = multiempresaDetected
+          ? 'Modo multiempresa activo: certificado por empresa'
+          : 'Modo legacy: Base64 global habilitado';
+      }
     }
 
     async function setEmpresaActiva(empresa, persist = true) {
