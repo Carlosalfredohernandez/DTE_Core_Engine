@@ -1943,6 +1943,7 @@ async def dashboard() -> HTMLResponse:
       setResultLoading(target, 'Ejecutando acción...');
       try {
         let data;
+        let refreshHistory = false;
         switch (op) {
           case 'health':
             data = await fetchJson('/health');
@@ -1996,9 +1997,11 @@ async def dashboard() -> HTMLResponse:
           }
           case 'boleta-generar':
             data = await fetchJson('/api/v1/boleta/generar', { method: 'POST', json: boletaPayload() });
+            refreshHistory = true;
             break;
           case 'boleta-enviar':
             data = await fetchJson('/api/v1/boleta/enviar', { method: 'POST', json: { dte_id: Number($('boletaIdEnviar').value) } });
+            refreshHistory = true;
             break;
           case 'boleta-obtener':
             data = await fetchJson(`/api/v1/boleta/${encodeURIComponent($('boletaId').value)}`);
@@ -2020,6 +2023,7 @@ async def dashboard() -> HTMLResponse:
           }
           case 'tracking-estado':
             data = await fetchJson(`/api/v1/tracking/${encodeURIComponent($('trackingDteId').value)}/estado`);
+            refreshHistory = true;
             break;
           case 'history-load':
             data = await fetchJson(`/api/v1/dashboard/dtes?${historyQueryParams()}`);
@@ -2030,6 +2034,9 @@ async def dashboard() -> HTMLResponse:
         }
         setResult(target, data, true);
         setConsole(data, true);
+        if (refreshHistory) {
+          await loadHistory(historyState.page).catch(() => {});
+        }
         showToast('Acción completada', 'La operación se ejecutó correctamente.', 'success');
       } catch (error) {
         const payload = error && error.data ? error.data : error;
