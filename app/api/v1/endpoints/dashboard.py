@@ -4,9 +4,12 @@ DTE Core Engine — Panel web administrativo.
 
 from __future__ import annotations
 
+import base64
+import secrets
 from math import ceil
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response
+from cryptography.hazmat.primitives.serialization import pkcs12
+from fastapi import APIRouter, Cookie, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy import String, cast, func, or_, select
@@ -14,7 +17,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_api_key, get_current_empresa, get_db_session
 from app.config import get_settings
-from app.domain.models import Dte
+from app.domain.models import Caf, Dte, Empresa
+from app.infrastructure.secrets import encrypt_secret
+from app.services.caf_service import CafService
 from app.services.empresa_service import build_empresa_branding
 
 router = APIRouter()
@@ -69,6 +74,72 @@ class DashboardBrandingUpdateRequest(BaseModel):
   brand_accent_2: str | None = None
 
 
+class DashboardEmpresaItem(BaseModel):
+  id: int
+  rut_emisor: str
+  rut_envia: str
+  razon_social_emisor: str
+  giro_emisor: str
+  acteco_emisor: int
+  dir_origen: str
+  cmna_origen: str
+  ciudad_origen: str
+  sii_ambiente: str
+  sii_fecha_resolucion: str
+  sii_numero_resolucion: int
+  api_key: str | None
+  es_default: bool
+  activo: bool
+
+
+class DashboardEmpresaUpsertRequest(BaseModel):
+  rut_emisor: str
+  rut_envia: str
+  razon_social_emisor: str
+  giro_emisor: str
+  acteco_emisor: int
+  dir_origen: str
+  cmna_origen: str
+  ciudad_origen: str
+  sii_ambiente: str = "certificacion"
+  sii_fecha_resolucion: str
+  sii_numero_resolucion: int
+  api_key: str | None = None
+  brand_name: str | None = None
+  brand_logo_url: str | None = None
+  brand_accent_1: str | None = None
+  brand_accent_2: str | None = None
+  cert_pfx_path: str | None = None
+
+
+def _empresa_to_item(empresa: Empresa) -> DashboardEmpresaItem:
+  return DashboardEmpresaItem(
+    id=empresa.id,
+    rut_emisor=empresa.rut_emisor,
+    rut_envia=empresa.rut_envia,
+    razon_social_emisor=empresa.razon_social_emisor,
+    giro_emisor=empresa.giro_emisor,
+    acteco_emisor=empresa.acteco_emisor,
+    dir_origen=empresa.dir_origen,
+    cmna_origen=empresa.cmna_origen,
+    ciudad_origen=empresa.ciudad_origen,
+    sii_ambiente=empresa.sii_ambiente,
+    sii_fecha_resolucion=empresa.sii_fecha_resolucion,
+    sii_numero_resolucion=empresa.sii_numero_resolucion,
+    api_key=empresa.api_key,
+    es_default=empresa.es_default,
+    activo=empresa.activo,
+  )
+
+
+async def _generate_unique_api_key(db: AsyncSession) -> str:
+  while True:
+    candidate = secrets.token_urlsafe(24)
+    existing = await db.execute(select(Empresa.id).where(Empresa.api_key == candidate))
+    if existing.scalar_one_or_none() is None:
+      return candidate
+
+
 def _dashboard_enabled() -> bool:
   return bool(settings.dashboard_password)
 
@@ -77,6 +148,13 @@ def _dashboard_authenticated(access_cookie: str | None) -> bool:
   if not _dashboard_enabled():
     return True
   return access_cookie == settings.dashboard_password
+
+
+def _require_dashboard_access(
+  access_cookie: str | None = Cookie(default=None, alias=dashboard_cookie_name),
+) -> None:
+  if not _dashboard_authenticated(access_cookie):
+    raise HTTPException(status_code=401, detail="Debes desbloquear el panel para administrar empresas")
 
 
 @router.get("/dashboard/session", include_in_schema=False)
@@ -208,6 +286,241 @@ async def dashboard_update_branding(
   await db.commit()
   await db.refresh(empresa)
   return DashboardBrandingResponse(**build_empresa_branding(empresa))
+
+
+@router.get("/dashboard/empresas", include_in_schema=False, response_model=list[DashboardEmpresaItem])
+async def dashboard_list_empresas(
+  include_inactive: bool = Query(default=False),
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> list[DashboardEmpresaItem]:
+  stmt = select(Empresa)
+  if not include_inactive:
+    stmt = stmt.where(Empresa.activo == True)
+  stmt = stmt.order_by(Empresa.es_default.desc(), Empresa.id.asc())
+  empresas = (await db.execute(stmt)).scalars().all()
+  return [_empresa_to_item(empresa) for empresa in empresas]
+
+
+@router.post("/dashboard/empresas", include_in_schema=False, response_model=DashboardEmpresaItem)
+async def dashboard_create_empresa(
+  payload: DashboardEmpresaUpsertRequest,
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> DashboardEmpresaItem:
+  api_key = (payload.api_key or "").strip() or await _generate_unique_api_key(db)
+
+  existing = await db.execute(select(Empresa).where(Empresa.api_key == api_key))
+  if existing.scalar_one_or_none() is not None:
+    raise HTTPException(status_code=409, detail="La API Key ya está en uso por otra empresa")
+
+  empresa = Empresa(
+    rut_emisor=payload.rut_emisor.strip(),
+    rut_envia=payload.rut_envia.strip(),
+    razon_social_emisor=payload.razon_social_emisor.strip(),
+    giro_emisor=payload.giro_emisor.strip(),
+    acteco_emisor=payload.acteco_emisor,
+    dir_origen=payload.dir_origen.strip(),
+    cmna_origen=payload.cmna_origen.strip(),
+    ciudad_origen=payload.ciudad_origen.strip(),
+    sii_ambiente=payload.sii_ambiente.strip() or "certificacion",
+    sii_fecha_resolucion=payload.sii_fecha_resolucion.strip(),
+    sii_numero_resolucion=payload.sii_numero_resolucion,
+    api_key=api_key,
+    brand_name=(payload.brand_name or "").strip() or payload.razon_social_emisor.strip(),
+    brand_logo_url=(payload.brand_logo_url or "").strip() or None,
+    brand_accent_1=(payload.brand_accent_1 or "").strip() or None,
+    brand_accent_2=(payload.brand_accent_2 or "").strip() or None,
+    cert_pfx_path=(payload.cert_pfx_path or "").strip() or None,
+    es_default=False,
+    activo=True,
+  )
+  db.add(empresa)
+  await db.commit()
+  await db.refresh(empresa)
+  return _empresa_to_item(empresa)
+
+
+@router.put("/dashboard/empresas/{empresa_id}", include_in_schema=False, response_model=DashboardEmpresaItem)
+async def dashboard_update_empresa(
+  empresa_id: int,
+  payload: DashboardEmpresaUpsertRequest,
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> DashboardEmpresaItem:
+  empresa = await db.get(Empresa, empresa_id)
+  if empresa is None:
+    raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+  api_key = (payload.api_key or "").strip() or empresa.api_key
+  if not api_key:
+    api_key = await _generate_unique_api_key(db)
+
+  existing = await db.execute(select(Empresa).where(Empresa.api_key == api_key, Empresa.id != empresa_id))
+  if existing.scalar_one_or_none() is not None:
+    raise HTTPException(status_code=409, detail="La API Key ya está en uso por otra empresa")
+
+  empresa.rut_emisor = payload.rut_emisor.strip()
+  empresa.rut_envia = payload.rut_envia.strip()
+  empresa.razon_social_emisor = payload.razon_social_emisor.strip()
+  empresa.giro_emisor = payload.giro_emisor.strip()
+  empresa.acteco_emisor = payload.acteco_emisor
+  empresa.dir_origen = payload.dir_origen.strip()
+  empresa.cmna_origen = payload.cmna_origen.strip()
+  empresa.ciudad_origen = payload.ciudad_origen.strip()
+  empresa.sii_ambiente = payload.sii_ambiente.strip() or "certificacion"
+  empresa.sii_fecha_resolucion = payload.sii_fecha_resolucion.strip()
+  empresa.sii_numero_resolucion = payload.sii_numero_resolucion
+  empresa.api_key = api_key
+  empresa.brand_name = (payload.brand_name or "").strip() or payload.razon_social_emisor.strip()
+  empresa.brand_logo_url = (payload.brand_logo_url or "").strip() or None
+  empresa.brand_accent_1 = (payload.brand_accent_1 or "").strip() or None
+  empresa.brand_accent_2 = (payload.brand_accent_2 or "").strip() or None
+  empresa.cert_pfx_path = (payload.cert_pfx_path or "").strip() or None
+  empresa.activo = True
+
+  await db.commit()
+  await db.refresh(empresa)
+  return _empresa_to_item(empresa)
+
+
+@router.delete("/dashboard/empresas/{empresa_id}", include_in_schema=False)
+async def dashboard_delete_empresa(
+  empresa_id: int,
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> dict:
+  empresa = await db.get(Empresa, empresa_id)
+  if empresa is None:
+    raise HTTPException(status_code=404, detail="Empresa no encontrada")
+  if empresa.es_default:
+    raise HTTPException(status_code=400, detail="No se puede eliminar la empresa por defecto")
+
+  empresa.activo = False
+  empresa.api_key = None
+  await db.commit()
+  return {"deleted": True, "empresa_id": empresa_id}
+
+
+@router.post("/dashboard/empresas/{empresa_id}/regenerate-key", include_in_schema=False, response_model=DashboardEmpresaItem)
+async def dashboard_regenerate_empresa_key(
+  empresa_id: int,
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> DashboardEmpresaItem:
+  empresa = await db.get(Empresa, empresa_id)
+  if empresa is None:
+    raise HTTPException(status_code=404, detail="Empresa no encontrada")
+  if not empresa.activo:
+    raise HTTPException(status_code=400, detail="La empresa está inactiva, reactívala primero")
+
+  empresa.api_key = await _generate_unique_api_key(db)
+  await db.commit()
+  await db.refresh(empresa)
+  return _empresa_to_item(empresa)
+
+
+@router.post("/dashboard/empresas/{empresa_id}/reactivate", include_in_schema=False, response_model=DashboardEmpresaItem)
+async def dashboard_reactivate_empresa(
+  empresa_id: int,
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> DashboardEmpresaItem:
+  empresa = await db.get(Empresa, empresa_id)
+  if empresa is None:
+    raise HTTPException(status_code=404, detail="Empresa no encontrada")
+
+  empresa.activo = True
+  if not empresa.api_key:
+    empresa.api_key = await _generate_unique_api_key(db)
+
+  await db.commit()
+  await db.refresh(empresa)
+  return _empresa_to_item(empresa)
+
+
+@router.post("/dashboard/empresas/{empresa_id}/caf", include_in_schema=False)
+async def dashboard_upload_caf_empresa(
+  empresa_id: int,
+  file: UploadFile = File(...),
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> dict:
+  empresa = await db.get(Empresa, empresa_id)
+  if empresa is None or not empresa.activo:
+    raise HTTPException(status_code=404, detail="Empresa no encontrada")
+  if not file.filename.lower().endswith(".xml"):
+    raise HTTPException(status_code=400, detail="El archivo debe ser .xml")
+
+  content = await file.read()
+  try:
+    xml_str = content.decode("latin-1")
+    caf_info = CafService.parse_caf_xml(xml_str)
+  except Exception as exc:
+    raise HTTPException(status_code=400, detail=f"CAF inválido: {str(exc)}") from exc
+
+  nuevo_caf = Caf(
+    empresa_id=empresa.id,
+    tipo_dte=caf_info["tipo_dte"],
+    rango_desde=caf_info["rango"]["desde"],
+    rango_hasta=caf_info["rango"]["hasta"],
+    folio_actual=caf_info["rango"]["desde"],
+    caf_xml=xml_str,
+    activo=True,
+  )
+  db.add(nuevo_caf)
+  await db.commit()
+  await db.refresh(nuevo_caf)
+  return {
+    "message": "CAF cargado para la empresa",
+    "empresa_id": empresa.id,
+    "caf_id": nuevo_caf.id,
+    "tipo_dte": nuevo_caf.tipo_dte,
+    "rango": f"{nuevo_caf.rango_desde}-{nuevo_caf.rango_hasta}",
+  }
+
+
+@router.post("/dashboard/empresas/{empresa_id}/cert", include_in_schema=False)
+async def dashboard_upload_cert_empresa(
+  empresa_id: int,
+  file: UploadFile = File(...),
+  password: str = Form(...),
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> dict:
+  empresa = await db.get(Empresa, empresa_id)
+  if empresa is None or not empresa.activo:
+    raise HTTPException(status_code=404, detail="Empresa no encontrada")
+  if not file.filename.lower().endswith(".pfx"):
+    raise HTTPException(status_code=400, detail="El archivo debe ser .pfx")
+  if not settings.cert_master_key:
+    raise HTTPException(status_code=400, detail="Falta CERT_MASTER_KEY para cifrar certificados")
+
+  content = await file.read()
+  try:
+    private_key, certificate, _ = pkcs12.load_key_and_certificates(
+      content,
+      password.encode("utf-8") if password else None,
+    )
+    if not private_key or not certificate:
+      raise HTTPException(status_code=400, detail="No se pudo leer el certificado .pfx")
+  except ValueError as exc:
+    raise HTTPException(status_code=400, detail="Contraseña de certificado inválida") from exc
+
+  pfx_b64 = base64.b64encode(content).decode("utf-8")
+  empresa.cert_pfx_base64 = encrypt_secret(pfx_b64, settings.cert_master_key)
+  empresa.cert_pfx_password = encrypt_secret(password, settings.cert_master_key)
+  empresa.cert_pfx_path = None
+
+  await db.commit()
+  await db.refresh(empresa)
+  return {
+    "message": "Certificado guardado para la empresa",
+    "empresa_id": empresa.id,
+    "subject": certificate.subject.rfc4514_string(),
+    "issuer": certificate.issuer.rfc4514_string(),
+    "not_valid_after": certificate.not_valid_after_utc.isoformat(),
+  }
 
 
 @router.get("/dashboard", include_in_schema=False, response_class=HTMLResponse)
@@ -440,6 +753,7 @@ async def dashboard() -> HTMLResponse:
         <button class="nav-link" data-jump="section-boleta">Boleta</button>
         <button class="nav-link" data-jump="section-tracking">Tracking</button>
         <button class="nav-link" data-jump="section-history">Historial</button>
+        <button class="nav-link" data-jump="section-empresas">Empresas</button>
         <button class="nav-link" data-jump="section-console">Consola</button>
         <div class="helper">Atajo: cada bloque se puede colapsar para trabajar más rápido.</div>
       </aside>
@@ -481,6 +795,89 @@ async def dashboard() -> HTMLResponse:
         <button class="btn secondary" id="btnResetBranding">Restaurar automático</button>
       </div>
       <div class="result" id="result-branding"></div>
+    </section>
+
+    <section class="card span-12" id="section-empresas">
+      <div class="card-header"><h2>Administrador de empresas</h2><button class="card-toggle" data-collapse="section-empresas">Ocultar</button></div>
+      <div class="sub card-body">Crea, edita y desactiva empresas. Desde aquí también puedes subir CAF y certificado digital por empresa.</div>
+      <div class="row-3 card-body">
+        <select class="select" id="empresaSelector"></select>
+        <button class="btn secondary" id="btnEmpresasLoad">Cargar empresas</button>
+        <button class="btn secondary" id="btnEmpresaNuevo">Limpiar formulario</button>
+      </div>
+      <div class="actions card-body" style="margin-top:8px;">
+        <label class="pill"><input type="checkbox" id="empresaIncludeInactive" style="margin-right:8px;">Mostrar inactivas</label>
+        <button class="btn secondary" id="btnEmpresaReactivar">Reactivar empresa</button>
+        <button class="btn secondary" id="btnEmpresaRegenKey">Regenerar API Key</button>
+      </div>
+      <div style="height:12px" class="card-body"></div>
+      <div class="row-3 card-body">
+        <input class="input" id="empresaRutEmisor" placeholder="RUT emisor" />
+        <input class="input" id="empresaRutEnvia" placeholder="RUT envía" />
+        <input class="input" id="empresaRazon" placeholder="Razón social" />
+      </div>
+      <div style="height:12px" class="card-body"></div>
+      <div class="row-3 card-body">
+        <input class="input" id="empresaGiro" placeholder="Giro" />
+        <input class="input" id="empresaActeco" placeholder="Acteco" />
+        <input class="input" id="empresaApiKey" placeholder="API Key (vacío = autogenerar)" />
+      </div>
+      <div style="height:12px" class="card-body"></div>
+      <div class="row-3 card-body">
+        <input class="input" id="empresaDir" placeholder="Dirección" />
+        <input class="input" id="empresaComuna" placeholder="Comuna" />
+        <input class="input" id="empresaCiudad" placeholder="Ciudad" />
+      </div>
+      <div style="height:12px" class="card-body"></div>
+      <div class="row-3 card-body">
+        <select class="select" id="empresaAmbiente">
+          <option value="certificacion">certificacion</option>
+          <option value="produccion">produccion</option>
+        </select>
+        <input class="input" id="empresaFechaRes" placeholder="Fecha resolución (YYYY-MM-DD)" />
+        <input class="input" id="empresaNumeroRes" placeholder="Número resolución" />
+      </div>
+      <div class="actions card-body" style="margin-top:12px;">
+        <button class="btn" id="btnEmpresaCrear">Crear empresa</button>
+        <button class="btn secondary" id="btnEmpresaGuardar">Guardar cambios</button>
+        <button class="btn danger" id="btnEmpresaEliminar">Eliminar empresa</button>
+      </div>
+
+      <div class="line card-body" style="margin-top:10px;"></div>
+
+      <div class="sub card-body">Carga de CAF para la empresa seleccionada.</div>
+      <div class="row card-body">
+        <input class="input" type="file" id="empresaCafFile" accept=".xml" />
+        <button class="btn secondary" id="btnEmpresaSubirCaf">Subir CAF empresa</button>
+      </div>
+
+      <div class="sub card-body" style="margin-top:12px;">Carga de certificado digital para la empresa seleccionada.</div>
+      <div class="row-3 card-body">
+        <input class="input" type="file" id="empresaPfxFile" accept=".pfx" />
+        <input class="input" id="empresaPfxPassword" placeholder="Contraseña PFX" type="password" />
+        <button class="btn secondary" id="btnEmpresaSubirCert">Subir certificado empresa</button>
+      </div>
+
+      <div class="card-body" style="overflow-x:auto; margin-top:12px;">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Razón social</th>
+              <th>RUT</th>
+              <th>Ambiente</th>
+              <th>Estado</th>
+              <th>API Key</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="empresasTableBody">
+            <tr><td colspan="7" class="muted">Sin datos de empresas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="result" id="result-empresas"></div>
     </section>
 
     <div class="grid">
@@ -659,6 +1056,12 @@ async def dashboard() -> HTMLResponse:
       branding: null,
     };
 
+    const empresasState = {
+      items: [],
+      selectedId: null,
+      includeInactive: false,
+    };
+
     const $ = (id) => document.getElementById(id);
 
     function syncUi() {
@@ -711,6 +1114,196 @@ async def dashboard() -> HTMLResponse:
       localStorage.setItem('dte_api_key', state.apiKey);
       syncUi();
       setConsole('API Key guardada localmente.');
+    }
+
+    function empresaPayloadFromForm() {
+      return {
+        rut_emisor: $('empresaRutEmisor').value.trim(),
+        rut_envia: $('empresaRutEnvia').value.trim(),
+        razon_social_emisor: $('empresaRazon').value.trim(),
+        giro_emisor: $('empresaGiro').value.trim(),
+        acteco_emisor: Number($('empresaActeco').value || 0),
+        dir_origen: $('empresaDir').value.trim(),
+        cmna_origen: $('empresaComuna').value.trim(),
+        ciudad_origen: $('empresaCiudad').value.trim(),
+        sii_ambiente: $('empresaAmbiente').value,
+        sii_fecha_resolucion: $('empresaFechaRes').value.trim(),
+        sii_numero_resolucion: Number($('empresaNumeroRes').value || 0),
+        api_key: $('empresaApiKey').value.trim(),
+      };
+    }
+
+    function clearEmpresaForm() {
+      empresasState.selectedId = null;
+      $('empresaSelector').value = '';
+      $('empresaRutEmisor').value = '';
+      $('empresaRutEnvia').value = '';
+      $('empresaRazon').value = '';
+      $('empresaGiro').value = '';
+      $('empresaActeco').value = '';
+      $('empresaApiKey').value = '';
+      $('empresaDir').value = '';
+      $('empresaComuna').value = '';
+      $('empresaCiudad').value = '';
+      $('empresaAmbiente').value = 'certificacion';
+      $('empresaFechaRes').value = '';
+      $('empresaNumeroRes').value = '';
+    }
+
+    function fillEmpresaForm(empresa) {
+      empresasState.selectedId = empresa.id;
+      $('empresaSelector').value = String(empresa.id);
+      $('empresaRutEmisor').value = empresa.rut_emisor || '';
+      $('empresaRutEnvia').value = empresa.rut_envia || '';
+      $('empresaRazon').value = empresa.razon_social_emisor || '';
+      $('empresaGiro').value = empresa.giro_emisor || '';
+      $('empresaActeco').value = String(empresa.acteco_emisor || '');
+      $('empresaApiKey').value = empresa.api_key || '';
+      $('empresaDir').value = empresa.dir_origen || '';
+      $('empresaComuna').value = empresa.cmna_origen || '';
+      $('empresaCiudad').value = empresa.ciudad_origen || '';
+      $('empresaAmbiente').value = empresa.sii_ambiente || 'certificacion';
+      $('empresaFechaRes').value = empresa.sii_fecha_resolucion || '';
+      $('empresaNumeroRes').value = String(empresa.sii_numero_resolucion || '');
+    }
+
+    function renderEmpresaSelector() {
+      const selector = $('empresaSelector');
+      const options = ['<option value="">Selecciona empresa</option>'];
+      empresasState.items.forEach((empresa) => {
+        const markDefault = empresa.es_default ? ' (default)' : '';
+        const markInactive = empresa.activo ? '' : ' [inactiva]';
+        options.push(`<option value="${empresa.id}">${empresa.razon_social_emisor}${markDefault}${markInactive}</option>`);
+      });
+      selector.innerHTML = options.join('');
+      if (empresasState.selectedId) {
+        selector.value = String(empresasState.selectedId);
+      }
+    }
+
+    function renderEmpresasTable() {
+      const body = $('empresasTableBody');
+      if (!empresasState.items.length) {
+        body.innerHTML = '<tr><td colspan="7" class="muted">No hay empresas para mostrar.</td></tr>';
+        return;
+      }
+
+      body.innerHTML = empresasState.items.map((empresa) => {
+        const estado = empresa.activo ? 'ACTIVA' : 'INACTIVA';
+        const keyLabel = empresa.api_key ? `${empresa.api_key.slice(0, 6)}...${empresa.api_key.slice(-4)}` : '-';
+        return `
+          <tr>
+            <td>${empresa.id}</td>
+            <td>${empresa.razon_social_emisor}${empresa.es_default ? ' (default)' : ''}</td>
+            <td>${empresa.rut_emisor}</td>
+            <td>${empresa.sii_ambiente}</td>
+            <td>${estado}</td>
+            <td>${keyLabel}</td>
+            <td><button class="btn secondary" data-empresa-open="${empresa.id}">Seleccionar</button></td>
+          </tr>
+        `;
+      }).join('');
+
+      body.querySelectorAll('[data-empresa-open]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.empresaOpen || 0);
+          const empresa = empresasState.items.find((item) => item.id === id);
+          if (empresa) fillEmpresaForm(empresa);
+        });
+      });
+    }
+
+    async function loadEmpresas(selectId = null) {
+      const query = empresasState.includeInactive ? '?include_inactive=true' : '';
+      const data = await fetchJson(`/api/v1/dashboard/empresas${query}`);
+      empresasState.items = Array.isArray(data) ? data : [];
+      renderEmpresaSelector();
+      renderEmpresasTable();
+      if (selectId) {
+        const empresa = empresasState.items.find((item) => item.id === selectId);
+        if (empresa) {
+          fillEmpresaForm(empresa);
+        }
+      }
+      if (!selectId && empresasState.items.length && !empresasState.selectedId) {
+        fillEmpresaForm(empresasState.items[0]);
+      }
+      setResult('result-empresas', data, true);
+      setConsole(data, true);
+    }
+
+    async function createEmpresa() {
+      const payload = empresaPayloadFromForm();
+      const data = await fetchJson('/api/v1/dashboard/empresas', { method: 'POST', json: payload });
+      await loadEmpresas(data.id);
+      setConsole('Empresa creada correctamente.', true);
+    }
+
+    async function updateEmpresa() {
+      const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
+      if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para guardar cambios.' };
+      const payload = empresaPayloadFromForm();
+      const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}`, { method: 'PUT', json: payload });
+      await loadEmpresas(data.id);
+      setConsole('Empresa actualizada correctamente.', true);
+    }
+
+    async function deleteEmpresa() {
+      const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
+      if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para eliminar.' };
+      if (!window.confirm('Se desactivará la empresa seleccionada. ¿Deseas continuar?')) {
+        return;
+      }
+      const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}`, { method: 'DELETE' });
+      clearEmpresaForm();
+      await loadEmpresas();
+      setResult('result-empresas', data, true);
+      setConsole('Empresa desactivada correctamente.', true);
+    }
+
+    async function reactivateEmpresa() {
+      const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
+      if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para reactivar.' };
+      const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/reactivate`, { method: 'POST', json: {} });
+      await loadEmpresas(data.id);
+      setResult('result-empresas', data, true);
+      setConsole('Empresa reactivada correctamente.', true);
+    }
+
+    async function regenerateEmpresaKey() {
+      const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
+      if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para regenerar API Key.' };
+      const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/regenerate-key`, { method: 'POST', json: {} });
+      await loadEmpresas(data.id);
+      setResult('result-empresas', data, true);
+      setConsole('API Key regenerada correctamente.', true);
+    }
+
+    async function uploadEmpresaCaf() {
+      const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
+      if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para subir CAF.' };
+      const file = $('empresaCafFile').files[0];
+      if (!file) throw { status: 0, data: 'Selecciona un archivo CAF XML.' };
+      const form = new FormData();
+      form.append('file', file);
+      const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/caf`, { method: 'POST', body: form });
+      setResult('result-empresas', data, true);
+      setConsole('CAF cargado para empresa.', true);
+    }
+
+    async function uploadEmpresaCert() {
+      const empresaId = empresasState.selectedId || Number($('empresaSelector').value);
+      if (!empresaId) throw { status: 0, data: 'Selecciona una empresa para subir certificado.' };
+      const file = $('empresaPfxFile').files[0];
+      if (!file) throw { status: 0, data: 'Selecciona un archivo PFX.' };
+      const password = $('empresaPfxPassword').value;
+      if (!password) throw { status: 0, data: 'Ingresa la contraseña del PFX.' };
+      const form = new FormData();
+      form.append('file', file);
+      form.append('password', password);
+      const data = await fetchJson(`/api/v1/dashboard/empresas/${empresaId}/cert`, { method: 'POST', body: form });
+      setResult('result-empresas', data, true);
+      setConsole('Certificado guardado para empresa.', true);
     }
 
     function wireSidebar() {
@@ -1017,10 +1610,33 @@ async def dashboard() -> HTMLResponse:
     $('btnHistoryNext').addEventListener('click', () => { if (historyState.page < historyState.lastPage) loadHistory(historyState.page + 1); });
     $('btnHistoryRefresh').addEventListener('click', () => loadHistory(historyState.page));
     $('historyPageSize').addEventListener('change', () => loadHistory(1));
+    $('btnEmpresasLoad').addEventListener('click', () => loadEmpresas().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresaNuevo').addEventListener('click', clearEmpresaForm);
+    $('btnEmpresaCrear').addEventListener('click', () => createEmpresa().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresaGuardar').addEventListener('click', () => updateEmpresa().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresaEliminar').addEventListener('click', () => deleteEmpresa().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresaReactivar').addEventListener('click', () => reactivateEmpresa().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresaRegenKey').addEventListener('click', () => regenerateEmpresaKey().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresaSubirCaf').addEventListener('click', () => uploadEmpresaCaf().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('btnEmpresaSubirCert').addEventListener('click', () => uploadEmpresaCert().catch((error) => setResult('result-empresas', error.data || error, false)));
+    $('empresaIncludeInactive').addEventListener('change', (event) => {
+      empresasState.includeInactive = !!event.target.checked;
+      loadEmpresas(empresasState.selectedId).catch((error) => setResult('result-empresas', error.data || error, false));
+    });
+    $('empresaSelector').addEventListener('change', (event) => {
+      const id = Number(event.target.value || 0);
+      if (!id) {
+        clearEmpresaForm();
+        return;
+      }
+      const empresa = empresasState.items.find((item) => item.id === id);
+      if (empresa) fillEmpresaForm(empresa);
+    });
     wireSidebar();
     syncUi();
     run('health');
     loadHistory(1).catch(() => {});
+    loadEmpresas().catch(() => {});
     loadBranding().catch(() => {});
     syncPanelLock();
   </script>
