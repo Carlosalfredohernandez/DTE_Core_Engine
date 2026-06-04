@@ -90,6 +90,10 @@ class DashboardEmpresaItem(BaseModel):
   api_key: str | None
   es_default: bool
   activo: bool
+  caf_count: int = 0
+  has_cert: bool = False
+  ready: bool = False
+  estado_operativo: str = "Pendiente"
 
 
 class DashboardEmpresaUpsertRequest(BaseModel):
@@ -294,12 +298,48 @@ async def dashboard_list_empresas(
   db: AsyncSession = Depends(get_db_session),
   _: None = Depends(_require_dashboard_access),
 ) -> list[DashboardEmpresaItem]:
-  stmt = select(Empresa)
+  caf_counts = (
+    select(Caf.empresa_id.label("empresa_id"), func.count(Caf.id).label("caf_count"))
+    .group_by(Caf.empresa_id)
+    .subquery()
+  )
+
+  stmt = (
+    select(Empresa, func.coalesce(caf_counts.c.caf_count, 0).label("caf_count"))
+    .outerjoin(caf_counts, caf_counts.c.empresa_id == Empresa.id)
+  )
   if not include_inactive:
     stmt = stmt.where(Empresa.activo == True)
   stmt = stmt.order_by(Empresa.es_default.desc(), Empresa.id.asc())
-  empresas = (await db.execute(stmt)).scalars().all()
-  return [_empresa_to_item(empresa) for empresa in empresas]
+  rows = (await db.execute(stmt)).all()
+  items: list[DashboardEmpresaItem] = []
+  for empresa, caf_count in rows:
+    has_cert = bool((empresa.cert_pfx_base64 or '').strip()) or bool((empresa.cert_pfx_path or '').strip())
+    ready = bool(empresa.activo and caf_count and has_cert)
+    if not empresa.activo:
+      estado_operativo = 'Inactiva'
+    elif ready:
+      estado_operativo = 'Lista'
+    elif not caf_count and not has_cert:
+      estado_operativo = 'Falta CAF y certificado'
+    elif not caf_count:
+      estado_operativo = 'Falta CAF'
+    elif not has_cert:
+      estado_operativo = 'Falta certificado'
+    else:
+      estado_operativo = 'Pendiente'
+
+    items.append(
+      DashboardEmpresaItem(
+        **_empresa_to_item(empresa).model_dump(),
+        caf_count=int(caf_count or 0),
+        has_cert=has_cert,
+        ready=ready,
+        estado_operativo=estado_operativo,
+      )
+    )
+
+  return items
 
 
 @router.post("/dashboard/empresas", include_in_schema=False, response_model=DashboardEmpresaItem)
@@ -613,7 +653,7 @@ async def dashboard() -> HTMLResponse:
     .eyebrow { display: inline-flex; gap: 10px; align-items: center; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
     h1 { margin: 14px 0 10px; font-size: clamp(34px, 4vw, 58px); line-height: 1.02; letter-spacing: -0.04em; }
     .lead { margin: 0; color: var(--muted); font-size: 15px; max-width: 72ch; line-height: 1.6; }
-    .hero-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 18px; }
+    .hero-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-top: 18px; }
     .metric { padding: 16px; background: rgba(255,255,255,0.03); }
     .metric .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
     .metric .value { font-size: 24px; font-weight: 700; margin-top: 6px; }
@@ -666,6 +706,12 @@ async def dashboard() -> HTMLResponse:
     .card.collapsed .card-body { display: none; }
     .card.collapsed .card-toggle::after { content: " +"; }
     .card .card-toggle::after { content: " -"; }
+    .card.focused {
+      border-color: rgba(101, 214, 255, 0.65);
+      box-shadow: 0 0 0 1px rgba(101, 214, 255, 0.25), 0 24px 60px rgba(101, 214, 255, 0.10), var(--shadow);
+      transform: translateY(-1px);
+      transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
     .sub { color: var(--muted); font-size: 13px; margin-top: -8px; margin-bottom: 14px; line-height: 1.5; }
     .history-toolbar {
       display: grid; grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr; gap: 10px; align-items: center;
@@ -754,9 +800,10 @@ async def dashboard() -> HTMLResponse:
     .status-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--warning); box-shadow: 0 0 0 4px rgba(251,191,36,0.12); }
     .topbar { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
     .topbar .actions { align-items: center; }
+    .topbar-empresa { display: grid; gap: 8px; justify-items: end; }
     .muted { color: var(--muted); }
     .mini { font-size: 12px; }
-    @media (max-width: 1200px) { .app-layout, .hero, .grid { grid-template-columns: 1fr; } .sidebar-nav { position: static; } .span-4, .span-6, .span-8, .span-12 { grid-column: span 12; } }
+    @media (max-width: 1200px) { .app-layout, .hero, .grid, .hero-grid { grid-template-columns: 1fr; } .sidebar-nav { position: static; } .span-4, .span-6, .span-8, .span-12 { grid-column: span 12; } }
     @media (max-width: 760px) { .shell { padding: 16px; } .row, .row-3, .hero-grid { grid-template-columns: 1fr; } h1 { font-size: 34px; } }
   </style>
 </head>
@@ -780,6 +827,13 @@ async def dashboard() -> HTMLResponse:
   <div class="shell">
     <div class="topbar">
       <div class="badge"><span class="status-dot"></span><span>Motor DTE · Panel de operaciones</span></div>
+      <div class="topbar-empresa" style="flex:1;">
+        <div class="actions" style="justify-content:flex-end; gap:10px;">
+          <select class="select" id="empresaActivaTop" style="max-width:340px; min-width:260px;"></select>
+          <div class="badge" id="empresaEstadoBadge"><span class="status-dot"></span><span id="empresaEstadoText">Sin empresa seleccionada</span></div>
+        </div>
+        <div class="badge" id="empresaRestoreBadge"><span class="status-dot"></span><span id="empresaRestoreText">Sin empresa restaurada</span></div>
+      </div>
       <div class="actions">
         <button class="btn secondary" id="btnHealth">Health</button>
         <button class="btn secondary" id="btnSaveKey">Guardar API Key</button>
@@ -818,6 +872,7 @@ async def dashboard() -> HTMLResponse:
         <div class="hero-grid">
           <div class="metric"><div class="label">API Base</div><div class="value" id="metricBase">/</div></div>
           <div class="metric"><div class="label">Empresa</div><div class="value" id="metricEmpresa">Motor DTE</div></div>
+          <div class="metric"><div class="label">Restaurada</div><div class="value" id="metricEmpresaRestore">Sin selección</div></div>
           <div class="metric"><div class="label">Estado</div><div class="value" id="metricHealth">Listo</div></div>
         </div>
         <div class="theme-strip"></div>
@@ -956,6 +1011,24 @@ async def dashboard() -> HTMLResponse:
         <button class="btn secondary" id="btnFlowCaf">Ir a CAF</button>
         <button class="btn secondary" id="btnFlowCert">Ir a certificado</button>
         <button class="btn secondary" id="btnFlowEmitir">Ir a boleta</button>
+        <button class="btn secondary" id="btnFlowProbarEmpresa">Probar empresa</button>
+      </div>
+      <div class="row-3 card-body" style="margin-top:8px;">
+        <div class="metric" style="margin:0;">
+          <div class="label">CAF</div>
+          <div class="value" style="font-size:18px;" id="flowCafStatus">Pendiente</div>
+          <div class="mini muted" id="flowCafHint">Selecciona una empresa para ver el estado.</div>
+        </div>
+        <div class="metric" style="margin:0;">
+          <div class="label">Certificado</div>
+          <div class="value" style="font-size:18px;" id="flowCertStatus">Pendiente</div>
+          <div class="mini muted" id="flowCertHint">Selecciona una empresa para ver el estado.</div>
+        </div>
+        <div class="metric" style="margin:0;">
+          <div class="label">Listo para emitir</div>
+          <div class="value" style="font-size:18px;" id="flowReadyStatus">No</div>
+          <div class="mini muted" id="flowReadyHint">Selecciona una empresa y valida sus componentes.</div>
+        </div>
       </div>
       <div class="result" id="result-flow">Selecciona un paso para moverte más rápido dentro del panel.</div>
     </section>
@@ -1136,11 +1209,15 @@ async def dashboard() -> HTMLResponse:
       branding: null,
     };
 
+    const persistedEmpresaId = Number(localStorage.getItem('dte_empresa_id') || 0);
+
     const empresasState = {
       items: [],
       selectedId: null,
       includeInactive: false,
     };
+
+    let restoredToastShown = false;
 
     const $ = (id) => document.getElementById(id);
 
@@ -1230,6 +1307,152 @@ async def dashboard() -> HTMLResponse:
       setConsole('API Key guardada localmente.');
     }
 
+    function persistEmpresaSelection(empresa) {
+      if (!empresa) return;
+      empresasState.selectedId = empresa.id;
+      localStorage.setItem('dte_empresa_id', String(empresa.id));
+      if (empresa.api_key) {
+        state.apiKey = empresa.api_key;
+        localStorage.setItem('dte_api_key', state.apiKey);
+        syncUi();
+      }
+    }
+
+    function renderEmpresaEstado(empresa) {
+      const badge = $('empresaEstadoBadge');
+      const text = $('empresaEstadoText');
+      if (!badge || !text) return;
+
+      if (!empresa) {
+        badge.className = 'badge';
+        text.textContent = 'Sin empresa seleccionada';
+        return;
+      }
+
+      const estado = empresa.estado_operativo || 'Pendiente';
+      const ready = !!empresa.ready;
+      badge.className = ready ? 'badge' : 'badge';
+      const parts = [empresa.razon_social_emisor, estado];
+      if (empresa.caf_count !== undefined) parts.push(`CAF: ${empresa.caf_count}`);
+      if (empresa.has_cert !== undefined) parts.push(empresa.has_cert ? 'Cert: OK' : 'Cert: Falta');
+      text.textContent = parts.join(' · ');
+      const dot = badge.querySelector('.status-dot');
+      if (dot) {
+        dot.style.background = ready ? 'var(--success)' : (empresa.activo ? 'var(--warning)' : 'var(--danger)');
+        dot.style.boxShadow = ready ? '0 0 0 4px rgba(52,211,153,0.12)' : (empresa.activo ? '0 0 0 4px rgba(251,191,36,0.12)' : '0 0 0 4px rgba(251,113,133,0.12)');
+      }
+    }
+
+    function renderEmpresaRestaurada(empresa) {
+      const badge = $('empresaRestoreBadge');
+      const text = $('empresaRestoreText');
+      const metric = $('metricEmpresaRestore');
+      if (!badge || !text) return;
+
+      if (!empresa) {
+        badge.className = 'badge';
+        text.textContent = 'Sin empresa restaurada';
+        if (metric) metric.textContent = 'Sin selección';
+        return;
+      }
+
+      const restored = empresa.id === persistedEmpresaId;
+      badge.className = 'badge';
+      text.textContent = restored ? `Restaurada: ${empresa.razon_social_emisor}` : `Activa: ${empresa.razon_social_emisor}`;
+      if (metric) {
+        metric.textContent = restored ? `Restaurada` : 'Activa';
+      }
+      const dot = badge.querySelector('.status-dot');
+      if (dot) {
+        dot.style.background = restored ? 'var(--success)' : 'var(--primary)';
+        dot.style.boxShadow = restored ? '0 0 0 4px rgba(52,211,153,0.12)' : '0 0 0 4px rgba(101,214,255,0.12)';
+      }
+    }
+
+    function getEmpresaActiva() {
+      if (!empresasState.items.length) return null;
+      const bySelected = empresasState.items.find((item) => item.id === empresasState.selectedId);
+      if (bySelected) return bySelected;
+      const byPersisted = empresasState.items.find((item) => item.id === persistedEmpresaId);
+      if (byPersisted) return byPersisted;
+      const byApiKey = empresasState.items.find((item) => item.api_key && item.api_key === state.apiKey);
+      if (byApiKey) return byApiKey;
+      return empresasState.items.find((item) => item.activo) || empresasState.items[0] || null;
+    }
+
+    function renderFlowChecklist() {
+      const empresa = getEmpresaActiva();
+      const cafStatus = $('flowCafStatus');
+      const cafHint = $('flowCafHint');
+      const certStatus = $('flowCertStatus');
+      const certHint = $('flowCertHint');
+      const readyStatus = $('flowReadyStatus');
+      const readyHint = $('flowReadyHint');
+
+      if (!empresa) {
+        if (cafStatus) cafStatus.textContent = 'Pendiente';
+        if (cafHint) cafHint.textContent = 'Selecciona una empresa para ver el estado.';
+        if (certStatus) certStatus.textContent = 'Pendiente';
+        if (certHint) certHint.textContent = 'Selecciona una empresa para ver el estado.';
+        if (readyStatus) readyStatus.textContent = 'No';
+        if (readyHint) readyHint.textContent = 'No hay empresa activa seleccionada.';
+        return;
+      }
+
+      const cafOk = Number(empresa.caf_count || 0) > 0;
+      const certOk = !!empresa.has_cert;
+      const ready = !!empresa.ready;
+
+      if (cafStatus) cafStatus.textContent = cafOk ? 'OK' : 'Falta';
+      if (cafHint) cafHint.textContent = cafOk ? `${empresa.caf_count} CAF cargado(s)` : 'Debe cargar al menos un CAF.';
+      if (certStatus) certStatus.textContent = certOk ? 'OK' : 'Falta';
+      if (certHint) certHint.textContent = certOk ? 'Certificado asociado a la empresa.' : 'Debe subir el certificado digital.';
+      if (readyStatus) readyStatus.textContent = ready ? 'Sí' : 'No';
+      if (readyHint) readyHint.textContent = ready ? 'Esta empresa ya puede emitir.' : 'Completa CAF y certificado para emitir.';
+    }
+
+    function renderTopEmpresaSelector() {
+      const selector = $('empresaActivaTop');
+      if (!selector) return;
+      const options = ['<option value="">Selecciona empresa activa</option>'];
+      empresasState.items.forEach((empresa) => {
+        const mark = empresa.activo ? '' : ' [inactiva]';
+        const ready = empresa.ready ? ' · lista' : ' · pendiente';
+        options.push(`<option value="${empresa.id}">${empresa.razon_social_emisor}${mark}${ready}</option>`);
+      });
+      selector.innerHTML = options.join('');
+      const current = empresasState.items.find((item) => item.id === empresasState.selectedId)
+        || empresasState.items.find((item) => item.id === persistedEmpresaId)
+        || empresasState.items.find((item) => item.api_key && item.api_key === state.apiKey);
+      if (current) {
+        selector.value = String(current.id);
+        renderEmpresaEstado(current);
+        renderEmpresaRestaurada(current);
+      } else if (empresasState.items.length) {
+        renderEmpresaEstado(empresasState.items[0]);
+        renderEmpresaRestaurada(empresasState.items[0]);
+      }
+    }
+
+    async function setEmpresaActiva(empresa, persist = true) {
+      if (!empresa) return;
+      empresasState.selectedId = empresa.id;
+      fillEmpresaForm(empresa);
+      renderEmpresaEstado(empresa);
+      if (persist) {
+        persistEmpresaSelection(empresa);
+      } else if (empresa.api_key) {
+        state.apiKey = empresa.api_key;
+        syncUi();
+      }
+      renderEmpresaRestaurada(empresa);
+      await loadBranding().catch(() => {});
+      await loadHistory(1).catch(() => {});
+      renderFlowChecklist();
+      showToast('Empresa activa', `${empresa.razon_social_emisor} quedó como empresa activa.`, 'success');
+      setConsole(`Empresa activa: ${empresa.razon_social_emisor}`);
+    }
+
     function jumpToSection(sectionId, message = '') {
       const section = document.getElementById(sectionId);
       if (section) {
@@ -1240,6 +1463,15 @@ async def dashboard() -> HTMLResponse:
         setResult('result-flow', message, true);
         showToast('Flujo guiado', message, 'info');
       }
+    }
+
+    function focusSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      if (!section) return;
+      section.classList.remove('collapsed');
+      section.classList.add('focused');
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.setTimeout(() => section.classList.remove('focused'), 1800);
     }
 
     function empresaPayloadFromForm() {
@@ -1262,6 +1494,8 @@ async def dashboard() -> HTMLResponse:
     function clearEmpresaForm() {
       empresasState.selectedId = null;
       $('empresaSelector').value = '';
+      const top = $('empresaActivaTop');
+      if (top) top.value = '';
       $('empresaRutEmisor').value = '';
       $('empresaRutEnvia').value = '';
       $('empresaRazon').value = '';
@@ -1278,7 +1512,10 @@ async def dashboard() -> HTMLResponse:
 
     function fillEmpresaForm(empresa) {
       empresasState.selectedId = empresa.id;
+      localStorage.setItem('dte_empresa_id', String(empresa.id));
       $('empresaSelector').value = String(empresa.id);
+      const top = $('empresaActivaTop');
+      if (top) top.value = String(empresa.id);
       $('empresaRutEmisor').value = empresa.rut_emisor || '';
       $('empresaRutEnvia').value = empresa.rut_envia || '';
       $('empresaRazon').value = empresa.razon_social_emisor || '';
@@ -1315,15 +1552,16 @@ async def dashboard() -> HTMLResponse:
       }
 
       body.innerHTML = empresasState.items.map((empresa) => {
-        const estado = empresa.activo ? 'ACTIVA' : 'INACTIVA';
+        const estado = empresa.ready ? 'LISTA' : (empresa.activo ? 'PENDIENTE' : 'INACTIVA');
         const keyLabel = empresa.api_key ? `${empresa.api_key.slice(0, 6)}...${empresa.api_key.slice(-4)}` : '-';
+        const badgeClass = empresa.ready ? 'pill' : (empresa.activo ? 'pill' : 'pill');
         return `
           <tr>
             <td>${empresa.id}</td>
             <td>${empresa.razon_social_emisor}${empresa.es_default ? ' (default)' : ''}</td>
             <td>${empresa.rut_emisor}</td>
             <td>${empresa.sii_ambiente}</td>
-            <td>${estado}</td>
+            <td><span class="${badgeClass}">${estado}</span></td>
             <td>${keyLabel}</td>
             <td><button class="btn secondary" data-empresa-open="${empresa.id}">Seleccionar</button></td>
           </tr>
@@ -1344,16 +1582,36 @@ async def dashboard() -> HTMLResponse:
       const query = empresasState.includeInactive ? '?include_inactive=true' : '';
       const data = await fetchJson(`/api/v1/dashboard/empresas${query}`);
       empresasState.items = Array.isArray(data) ? data : [];
-      renderEmpresaSelector();
-      renderEmpresasTable();
-      if (selectId) {
-        const empresa = empresasState.items.find((item) => item.id === selectId);
+      const targetId = selectId || empresasState.selectedId || persistedEmpresaId || null;
+      if (targetId) {
+        const empresa = empresasState.items.find((item) => item.id === targetId);
         if (empresa) {
           fillEmpresaForm(empresa);
+          if (empresa.api_key) {
+            state.apiKey = empresa.api_key;
+            localStorage.setItem('dte_api_key', state.apiKey);
+            syncUi();
+          }
         }
       }
-      if (!selectId && empresasState.items.length && !empresasState.selectedId) {
+      if (!targetId && empresasState.items.length) {
         fillEmpresaForm(empresasState.items[0]);
+        persistEmpresaSelection(empresasState.items[0]);
+      }
+      renderEmpresaSelector();
+      renderTopEmpresaSelector();
+      renderEmpresasTable();
+      renderFlowChecklist();
+      if (targetId) {
+        focusSection('section-empresas');
+        if (!restoredToastShown) {
+          const empresa = empresasState.items.find((item) => item.id === targetId);
+          if (empresa) {
+            const estadoTexto = empresa.ready ? 'lista para emitir' : (empresa.activo ? 'pendiente de completar' : 'inactiva');
+            showToast('Empresa restaurada', `Se cargó ${empresa.razon_social_emisor} como empresa activa (${estadoTexto}).`, 'info');
+            restoredToastShown = true;
+          }
+        }
       }
       setResult('result-empresas', data, true);
       setConsole(data, true);
@@ -1775,11 +2033,46 @@ async def dashboard() -> HTMLResponse:
       }
       const empresa = empresasState.items.find((item) => item.id === id);
       if (empresa) fillEmpresaForm(empresa);
+      renderFlowChecklist();
+    });
+    $('empresaActivaTop').addEventListener('change', async (event) => {
+      const id = Number(event.target.value || 0);
+      if (!id) return;
+      const empresa = empresasState.items.find((item) => item.id === id);
+      if (!empresa) return;
+      await setEmpresaActiva(empresa).catch((error) => setResult('result-flow', error.data || error, false));
     });
     $('btnFlowNewEmpresa').addEventListener('click', () => jumpToSection('section-empresas', 'Completa el formulario y crea o selecciona una empresa.'));
     $('btnFlowCaf').addEventListener('click', () => jumpToSection('section-empresas', 'Selecciona la empresa y sube su CAF desde aquí.'));
     $('btnFlowCert').addEventListener('click', () => jumpToSection('section-empresas', 'Selecciona la empresa y sube su certificado digital.'));
     $('btnFlowEmitir').addEventListener('click', () => jumpToSection('section-boleta', 'Cuando la empresa tenga CAF y certificado, prueba la emisión desde boleta.'));
+    $('btnFlowProbarEmpresa').addEventListener('click', () => {
+      const empresa = getEmpresaActiva();
+      if (!empresa) {
+        setResult('result-flow', 'Selecciona una empresa primero.', false);
+        showToast('Flujo guiado', 'No hay empresa activa seleccionada.', 'error');
+        return;
+      }
+
+      const issues = [];
+      if (!empresa.activo) issues.push('la empresa está inactiva');
+      if (!empresa.caf_count) issues.push('falta CAF');
+      if (!empresa.has_cert) issues.push('falta certificado');
+
+      renderFlowChecklist();
+
+      if (!issues.length) {
+        const message = `${empresa.razon_social_emisor} está lista para emitir.`;
+        setResult('result-flow', message, true);
+        showToast('Empresa lista', message, 'success');
+        jumpToSection('section-boleta', 'Empresa lista para emitir. Puedes probar la generación de boleta.');
+        return;
+      }
+
+      const message = `A ${empresa.razon_social_emisor} le falta: ${issues.join(', ')}.`;
+      setResult('result-flow', message, false);
+      showToast('Empresa pendiente', message, 'error');
+    });
     wireSidebar();
     syncUi();
     run('health');
