@@ -288,7 +288,27 @@ class DteService:
                 rut_empresa=(empresa.rut_emisor if empresa is not None else settings.rut_emisor)
             )
 
-            root = etree.fromstring(response_xml.encode("utf-8"))
+            try:
+                root = etree.fromstring(response_xml.encode("utf-8"))
+            except Exception:
+                raw_preview = (response_xml or "")[:2000]
+                dte.estado = EstadoDte.ERROR_ENVIO
+                dte.glosa_sii = "Respuesta no XML del SII en upload"
+                log = SiiLog(
+                    empresa_id=empresa.id if empresa and empresa.id is not None else None,
+                    dte_id=dte.id,
+                    operacion="UPLOAD",
+                    request_data=envio_xml_firmado,
+                    response_data=raw_preview,
+                    status_code=502,
+                )
+                session.add(log)
+                await session.commit()
+                raise SiiEnvioError(
+                    "El SII devolvió una respuesta inválida (no XML). Revisa 'Ver log' para detalle.",
+                    status=502,
+                )
+
             status = root.findtext(".//STATUS")
 
             if status == "0":
@@ -351,6 +371,7 @@ class DteService:
                     else f"Rechazo en Upload. Status: {status}"
                 )
                 log = SiiLog(
+                    empresa_id=empresa.id if empresa and empresa.id is not None else None,
                     dte_id=dte.id,
                     operacion="UPLOAD",
                     request_data=envio_xml_firmado,
