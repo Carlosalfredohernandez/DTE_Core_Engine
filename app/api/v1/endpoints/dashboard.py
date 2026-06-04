@@ -1940,6 +1940,21 @@ async def dashboard() -> HTMLResponse:
       return payload;
     }
 
+    function requireActiveEmpresaSelection() {
+      const selector = $('empresaActivaTop');
+      const selectedId = Number(selector?.value || 0);
+      if (!selectedId) {
+        jumpToSection('section-empresas', 'Selecciona una empresa activa antes de emitir boletas.');
+        throw { status: 0, data: 'Selecciona una empresa activa en el selector superior antes de continuar.' };
+      }
+      const empresa = empresasState.items.find((item) => item.id === selectedId);
+      if (!empresa || !empresa.activo) {
+        jumpToSection('section-empresas', 'La empresa activa no está disponible. Selecciona otra empresa activa.');
+        throw { status: 0, data: 'La empresa activa no está disponible o está inactiva.' };
+      }
+      return empresa;
+    }
+
     async function run(op) {
       const target = op.startsWith('caf') ? 'result-caf' : op.startsWith('pfx') ? 'result-pfx' : op.startsWith('tracking') ? 'result-tracking' : op.startsWith('token') ? 'result-token' : 'result-boleta';
       setResultLoading(target, 'Ejecutando acción...');
@@ -1998,10 +2013,12 @@ async def dashboard() -> HTMLResponse:
             break;
           }
           case 'boleta-generar':
+            requireActiveEmpresaSelection();
             data = await fetchJson('/api/v1/boleta/generar', { method: 'POST', json: boletaPayload() });
             refreshHistory = true;
             break;
           case 'boleta-enviar':
+            requireActiveEmpresaSelection();
             data = await fetchJson('/api/v1/boleta/enviar', { method: 'POST', json: { dte_id: Number($('boletaIdEnviar').value) } });
             refreshHistory = true;
             break;
