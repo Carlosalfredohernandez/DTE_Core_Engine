@@ -2019,9 +2019,16 @@ async def dashboard() -> HTMLResponse:
             break;
           case 'boleta-enviar':
             requireActiveEmpresaSelection();
-            const dteIdEnviar = Number($('boletaIdEnviar').value);
+            let dteIdEnviar = Number($('boletaIdEnviar').value);
             if (!Number.isInteger(dteIdEnviar) || dteIdEnviar <= 0) {
-              throw { status: 0, data: 'Ingresa un ID DTE válido (> 0) en "ID DTE para enviar".' };
+              const dteIdConsulta = Number($('boletaId').value);
+              if (Number.isInteger(dteIdConsulta) && dteIdConsulta > 0) {
+                dteIdEnviar = dteIdConsulta;
+                $('boletaIdEnviar').value = String(dteIdEnviar);
+              }
+            }
+            if (!Number.isInteger(dteIdEnviar) || dteIdEnviar <= 0) {
+              throw { status: 0, data: 'Ingresa un ID DTE válido (> 0) en "ID DTE para enviar" o en "ID DTE".' };
             }
             data = await fetchJson('/api/v1/boleta/enviar', { method: 'POST', json: { dte_id: dteIdEnviar } });
             refreshHistory = true;
