@@ -2031,6 +2031,19 @@ async def dashboard() -> HTMLResponse:
               throw { status: 0, data: 'Ingresa un ID DTE válido (> 0) en "ID DTE para enviar" o en "ID DTE".' };
             }
             data = await fetchJson('/api/v1/boleta/enviar', { method: 'POST', json: { dte_id: dteIdEnviar } });
+            $('boletaId').value = String(dteIdEnviar);
+            $('trackingDteId').value = String(dteIdEnviar);
+            if (data && data.track_id) {
+              try {
+                const trackingData = await fetchJson(`/api/v1/tracking/${encodeURIComponent(dteIdEnviar)}/estado`);
+                data = { ...data, tracking: trackingData };
+              } catch (trackingError) {
+                data = {
+                  ...data,
+                  tracking_warning: trackingError && trackingError.data ? trackingError.data : 'No fue posible consultar tracking inmediatamente.',
+                };
+              }
+            }
             refreshHistory = true;
             break;
           case 'boleta-obtener':
