@@ -403,4 +403,13 @@ class DteService:
             raise
         except Exception as e:
             await session.rollback()
-            raise e
+            logger.exception(
+                "Fallo inesperado en pre-upload de boleta",
+                dte_id=dte_id,
+                empresa_id=empresa.id if empresa and empresa.id is not None else None,
+                error_type=type(e).__name__,
+            )
+            raise SiiEnvioError(
+                f"Fallo previo al upload al SII ({type(e).__name__}): {str(e)}",
+                status=400,
+            ) from e

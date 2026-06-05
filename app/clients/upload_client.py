@@ -47,12 +47,31 @@ class UploadClient:
             "Cookie": f"TOKEN={token}",
         }
 
-        # Limpiar RUTs de puntos y guiones para asegurar formato numérico
-        def clean_rut(r):
-            return r.replace(".", "").replace("-", "").upper()
+        # Normaliza/valida RUT para evitar errores Python no controlados
+        # que terminan como 500 genérico en el endpoint.
+        def clean_rut(rut_value: str | None, field_name: str) -> str:
+            value = (rut_value or "").strip().replace(".", "").replace("-", "").upper()
+            if not value:
+                raise SiiUploadError(f"{field_name} está vacío para upload al SII", status=400)
+            if len(value) < 2:
+                raise SiiUploadError(f"{field_name} inválido para upload al SII: '{rut_value}'", status=400)
 
-        clean_emisor = clean_rut(rut_emisor)
-        clean_empresa = clean_rut(rut_empresa)
+            body = value[:-1]
+            dv = value[-1]
+            if not body.isdigit() or not (dv.isdigit() or dv == "K"):
+                raise SiiUploadError(f"{field_name} inválido para upload al SII: '{rut_value}'", status=400)
+            return value
+
+        clean_emisor = clean_rut(rut_emisor, "rut_emisor")
+        clean_empresa = clean_rut(rut_empresa, "rut_empresa")
+
+        try:
+            xml_payload = xml_content.encode("latin-1")
+        except UnicodeEncodeError as e:
+            raise SiiUploadError(
+                "El XML contiene caracteres no soportados por Latin-1 para upload al SII",
+                status=400,
+            ) from e
 
         # En el SII DTEUpload, se envían los primeros N-1 caracteres como RUT y el último como DV
         files = {
@@ -60,7 +79,7 @@ class UploadClient:
             "dvSender": (None, clean_emisor[-1]),
             "rutCompany": (None, clean_empresa[:-1]),
             "dvCompany": (None, clean_empresa[-1]),
-            "archivo": ("boleta.xml", xml_content.encode("latin-1"), "text/xml"),
+            "archivo": ("boleta.xml", xml_payload, "text/xml"),
         }
 
         try:
