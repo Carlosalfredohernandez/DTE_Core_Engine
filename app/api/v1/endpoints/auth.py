@@ -3,12 +3,16 @@ DTE Core Engine — Endpoint para estado del Token SII.
 """
 
 from fastapi import APIRouter, Depends
+from fastapi import HTTPException, status
 from pydantic import BaseModel
+import structlog
 
 from app.api.deps import get_api_key, get_current_empresa
+from app.domain.exceptions import DteEngineError
 from app.services.token_service import token_service
 
 router = APIRouter()
+logger = structlog.get_logger(__name__)
 
 
 class TokenStatusResponse(BaseModel):
@@ -49,8 +53,15 @@ async def get_token_status(empresa = Depends(get_current_empresa), _: str = Depe
 @router.post("/refresh")
 async def refresh_token(empresa = Depends(get_current_empresa), _: str = Depends(get_api_key)):
     """Fuerza la renovación del Token en el SII."""
-    token = await token_service.get_valid_token(force_refresh=True, empresa=empresa)
-    return {"message": "Token renovado exitosamente"}
+    try:
+        await token_service.get_valid_token(force_refresh=True, empresa=empresa)
+        return {"message": "Token renovado exitosamente"}
+    except DteEngineError as e:
+        logger.warning("Error controlado renovando token", error=e.message, code=e.code)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
 
 
 @router.post("/validate", response_model=CertTestResponse)
@@ -59,7 +70,14 @@ async def validate_cert(req: CertTestRequest, _: str = Depends(get_api_key)):
     Prueba un certificado PFX específico.
     Útil para debugging de credenciales y conectividad.
     """
-    result = await token_service.test_pfx(req.path, req.password)
+    try:
+        result = await token_service.test_pfx(req.path, req.password)
+    except DteEngineError as e:
+        logger.warning("Error controlado validando certificado", error=e.message, code=e.code)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
     
     return CertTestResponse(
         ok=result["ok"],
