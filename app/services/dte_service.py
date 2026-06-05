@@ -201,12 +201,24 @@ class DteService:
         """
         Toma un DTE generado, lo envuelve en un EnvioDTE, lo firma y lo envía al SII.
         """
+        if dte_id <= 0:
+            raise BusinessValidationError(
+                "El dte_id debe ser mayor que 0.",
+                field="dte_id",
+            )
+
         dte = await session.get(Dte, dte_id)
         if not dte:
-            raise ValueError(f"DTE con ID {dte_id} no encontrado")
+            raise BusinessValidationError(
+                f"DTE con ID {dte_id} no encontrado.",
+                field="dte_id",
+            )
         
         if not dte.xml_documento:
-            raise ValueError("El DTE no tiene XML documento generado")
+            raise BusinessValidationError(
+                "El DTE no tiene XML documento generado.",
+                field="dte_id",
+            )
 
         # Guardrail suave: no bloquear por una combinación específica de
         # resolución, ya que en certificación SII puede ser válida.

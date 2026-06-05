@@ -2019,7 +2019,11 @@ async def dashboard() -> HTMLResponse:
             break;
           case 'boleta-enviar':
             requireActiveEmpresaSelection();
-            data = await fetchJson('/api/v1/boleta/enviar', { method: 'POST', json: { dte_id: Number($('boletaIdEnviar').value) } });
+            const dteIdEnviar = Number($('boletaIdEnviar').value);
+            if (!Number.isInteger(dteIdEnviar) || dteIdEnviar <= 0) {
+              throw { status: 0, data: 'Ingresa un ID DTE válido (> 0) en "ID DTE para enviar".' };
+            }
+            data = await fetchJson('/api/v1/boleta/enviar', { method: 'POST', json: { dte_id: dteIdEnviar } });
             refreshHistory = true;
             break;
           case 'boleta-obtener':
