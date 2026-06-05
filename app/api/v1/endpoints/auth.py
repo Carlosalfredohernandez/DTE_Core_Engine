@@ -62,6 +62,12 @@ async def refresh_token(empresa = Depends(get_current_empresa), _: str = Depends
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message,
         )
+    except Exception as e:
+        logger.exception("Error inesperado renovando token", error_type=type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Fallo renovando token SII: {str(e)}",
+        )
 
 
 @router.post("/validate", response_model=CertTestResponse)
@@ -77,6 +83,12 @@ async def validate_cert(req: CertTestRequest, _: str = Depends(get_api_key)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message,
+        )
+    except Exception as e:
+        logger.exception("Error inesperado validando certificado", error_type=type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Fallo validando certificado: {str(e)}",
         )
     
     return CertTestResponse(
