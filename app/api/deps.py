@@ -4,7 +4,7 @@ DTE Core Engine — Dependencias para FastAPI.
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Security, status, Header
 from fastapi.security import APIKeyHeader
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,7 +52,20 @@ async def get_current_empresa(
             detail="API Key inválida o faltante",
         )
 
+    # If caller used the global/admin API key, allow optionally targeting a
+    # specific empresa by sending the `X-Empresa-Id` header. This override is
+    # only honored when the global API key is used (admin scenario).
+    empresa_id_header: int | None = Header(None, alias="X-Empresa-Id")
+
     if api_key == settings.api_key:
+        if empresa_id_header is not None:
+            empresa = await db.get(Empresa, empresa_id_header)
+            if empresa is None or not empresa.activo:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Empresa no encontrada o inactiva",
+                )
+            return empresa
         return await ensure_default_empresa(db)
 
     empresa = await resolve_empresa_by_api_key(db, api_key)
