@@ -1901,6 +1901,14 @@ async def dashboard() -> HTMLResponse:
     async function fetchJson(path, options = {}) {
       const headers = new Headers(options.headers || {});
       if (state.apiKey) headers.set('X-API-Key', state.apiKey);
+      // Enviar X-Empresa-Id cuando hay una empresa activa seleccionada en el dashboard.
+      // Esto permite usar la API key global y especificar la empresa objetivo.
+      try {
+        const empresaId = empresasState && empresasState.selectedId ? empresasState.selectedId : null;
+        if (empresaId) headers.set('X-Empresa-Id', String(empresaId));
+      } catch (e) {
+        // seguridad: si empresasState no está definido, no hacemos nada
+      }
       if (options.json !== undefined) {
         headers.set('Content-Type', 'application/json');
       }
