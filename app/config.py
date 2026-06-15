@@ -93,32 +93,67 @@ class Settings(BaseSettings):
     @property
     def sii_host(self) -> str:
         """Host del SII según el ambiente configurado."""
-        return SII_HOSTS[self.sii_ambiente]
+        return self.sii_host_for(self.sii_ambiente)
+
+    def _resolve_ambiente(self, ambiente: Ambiente | str | None = None) -> Ambiente:
+        """Resuelve un ambiente válido, tolerando str/minúsculas y fallback seguro."""
+        if ambiente is None:
+            return self.sii_ambiente
+        if isinstance(ambiente, Ambiente):
+            return ambiente
+        raw = str(ambiente).strip().lower()
+        if raw == Ambiente.PRODUCCION.value:
+            return Ambiente.PRODUCCION
+        if raw == Ambiente.CERTIFICACION.value:
+            return Ambiente.CERTIFICACION
+        return self.sii_ambiente
+
+    def sii_host_for(self, ambiente: Ambiente | str | None = None) -> str:
+        resolved = self._resolve_ambiente(ambiente)
+        return SII_HOSTS[resolved]
 
     @property
     def sii_base_url(self) -> str:
         """URL base HTTPS del SII."""
-        return f"https://{self.sii_host}"
+        return self.sii_base_url_for(self.sii_ambiente)
+
+    def sii_base_url_for(self, ambiente: Ambiente | str | None = None) -> str:
+        return f"https://{self.sii_host_for(ambiente)}"
 
     @property
     def sii_wsdl_seed(self) -> str:
-        return f"{self.sii_base_url}/DTEWS/CrSeed.jws?WSDL"
+        return self.sii_wsdl_seed_for(self.sii_ambiente)
+
+    def sii_wsdl_seed_for(self, ambiente: Ambiente | str | None = None) -> str:
+        return f"{self.sii_base_url_for(ambiente)}/DTEWS/CrSeed.jws?WSDL"
 
     @property
     def sii_wsdl_token(self) -> str:
-        return f"{self.sii_base_url}/DTEWS/GetTokenFromSeed.jws?WSDL"
+        return self.sii_wsdl_token_for(self.sii_ambiente)
+
+    def sii_wsdl_token_for(self, ambiente: Ambiente | str | None = None) -> str:
+        return f"{self.sii_base_url_for(ambiente)}/DTEWS/GetTokenFromSeed.jws?WSDL"
 
     @property
     def sii_wsdl_query_est_up(self) -> str:
-        return f"{self.sii_base_url}/DTEWS/QueryEstUp.jws?WSDL"
+        return self.sii_wsdl_query_est_up_for(self.sii_ambiente)
+
+    def sii_wsdl_query_est_up_for(self, ambiente: Ambiente | str | None = None) -> str:
+        return f"{self.sii_base_url_for(ambiente)}/DTEWS/QueryEstUp.jws?WSDL"
 
     @property
     def sii_wsdl_query_est_dte(self) -> str:
-        return f"{self.sii_base_url}/DTEWS/QueryEstDte.jws?WSDL"
+        return self.sii_wsdl_query_est_dte_for(self.sii_ambiente)
+
+    def sii_wsdl_query_est_dte_for(self, ambiente: Ambiente | str | None = None) -> str:
+        return f"{self.sii_base_url_for(ambiente)}/DTEWS/QueryEstDte.jws?WSDL"
 
     @property
     def sii_upload_url(self) -> str:
-        return f"{self.sii_base_url}/cgi_dte/UPL/DTEUpload"
+        return self.sii_upload_url_for(self.sii_ambiente)
+
+    def sii_upload_url_for(self, ambiente: Ambiente | str | None = None) -> str:
+        return f"{self.sii_base_url_for(ambiente)}/cgi_dte/UPL/DTEUpload"
 
     @field_validator("database_url", mode="before")
     @classmethod

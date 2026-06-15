@@ -3,6 +3,7 @@ DTE Core Engine — Orquestador de Generación de DTE.
 """
 
 import datetime
+import hashlib
 import re
 from typing import Any
 
@@ -84,6 +85,25 @@ class DteService:
                 ),
                 field="rut_envia",
             )
+
+    @staticmethod
+    def _extract_schema_location(xml_content: str) -> str | None:
+        try:
+            root = etree.fromstring(xml_content.encode("latin-1"))
+            return root.get("{http://www.w3.org/2001/XMLSchema-instance}schemaLocation")
+        except Exception:
+            return None
+
+    @staticmethod
+    def _build_upload_diag(empresa: Empresa | None, envio_xml_firmado: str) -> dict[str, str]:
+        ambiente = empresa.sii_ambiente if empresa is not None else settings.sii_ambiente.value
+        return {
+            "ambiente": str(ambiente),
+            "upload_url": settings.sii_upload_url_for(ambiente),
+            "schema_location": DteService._extract_schema_location(envio_xml_firmado) or "",
+            "xml_sha1": hashlib.sha1(envio_xml_firmado.encode("latin-1")).hexdigest(),
+            "xml_head": envio_xml_firmado[:600],
+        }
 
     @staticmethod
     async def generar_boleta(
@@ -297,7 +317,8 @@ class DteService:
                 token=token,
                 xml_content=envio_xml_firmado,
                 rut_emisor=(empresa.rut_envia if empresa is not None else settings.rut_envia),
-                rut_empresa=(empresa.rut_emisor if empresa is not None else settings.rut_emisor)
+                rut_empresa=(empresa.rut_emisor if empresa is not None else settings.rut_emisor),
+                empresa=empresa,
             )
 
             try:
@@ -376,6 +397,30 @@ class DteService:
 
                 # Commit ANTES de lanzar: así xml_envio y el log quedan persistidos
                 # y son inspeccionables aunque la operación haya fallado.
+                upload_diag = DteService._build_upload_diag(empresa, envio_xml_firmado)
+                request_data = envio_xml_firmado
+                if status == "7":
+                    request_data = (
+                        "=== DIAGNOSTICO_UPLOAD ===\n"
+                        f"AMBIENTE={upload_diag['ambiente']}\n"
+                        f"UPLOAD_URL={upload_diag['upload_url']}\n"
+                        f"SCHEMA_LOCATION={upload_diag['schema_location']}\n"
+                        f"XML_SHA1={upload_diag['xml_sha1']}\n"
+                        "XML_HEAD_START\n"
+                        f"{upload_diag['xml_head']}\n"
+                        "XML_HEAD_END\n\n"
+                        f"{envio_xml_firmado}"
+                    )
+                    logger.error(
+                        "SII rechazo upload con STATUS 7",
+                        dte_id=dte.id,
+                        empresa_id=empresa.id if empresa and empresa.id is not None else None,
+                        ambiente=upload_diag["ambiente"],
+                        upload_url=upload_diag["upload_url"],
+                        schema_location=upload_diag["schema_location"],
+                        xml_sha1=upload_diag["xml_sha1"],
+                    )
+
                 dte.estado = EstadoDte.ERROR_ENVIO
                 dte.glosa_sii = (
                     f"Rechazo en Upload. Status: {status}. {detalle}"
@@ -386,7 +431,7 @@ class DteService:
                     empresa_id=empresa.id if empresa and empresa.id is not None else None,
                     dte_id=dte.id,
                     operacion="UPLOAD",
-                    request_data=envio_xml_firmado,
+                    request_data=request_data,
                     response_data=response_xml,
                     status_code=400
                 )

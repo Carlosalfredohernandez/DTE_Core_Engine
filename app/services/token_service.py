@@ -180,14 +180,14 @@ class TokenService:
             logger.info("Obteniendo nuevo token SII")
             
             # 1. Obtener Semilla
-            seed_xml_response = await self.seed_client.get_seed()
+            seed_xml_response = await self.seed_client.get_seed(empresa=empresa)
             
             # 2. Extraer y Firmar Semilla
             import signxml # local import para prevenir problemas si falla global
             signed_seed_xml = self._sign_seed(seed_xml_response, empresa=empresa)
             
             # 3. Obtener Token
-            token_xml_response = await self.token_client.get_token(signed_seed_xml)
+            token_xml_response = await self.token_client.get_token(signed_seed_xml, empresa=empresa)
             
             # 4. Extraer valor del Token
             try:

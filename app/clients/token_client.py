@@ -7,6 +7,7 @@ import structlog
 from app.clients.base_soap import create_soap_client
 from app.config import get_settings
 from app.domain.exceptions import SiiTokenError
+from app.domain.models import Empresa
 from app.infrastructure.retry import sii_retry
 
 logger = structlog.get_logger(__name__)
@@ -17,16 +18,19 @@ class TokenClient:
     """Cliente para el servicio GetTokenFromSeed.jws del SII."""
 
     def __init__(self):
-        self.wsdl_url = settings.sii_wsdl_token
         self._client = None
+        self._client_wsdl_url: str | None = None
 
-    async def _get_client(self):
-        if self._client is None:
-            self._client = create_soap_client(self.wsdl_url)
+    async def _get_client(self, empresa: Empresa | None = None):
+        ambiente = empresa.sii_ambiente if empresa is not None else None
+        wsdl_url = settings.sii_wsdl_token_for(ambiente)
+        if self._client is None or self._client_wsdl_url != wsdl_url:
+            self._client = create_soap_client(wsdl_url)
+            self._client_wsdl_url = wsdl_url
         return self._client
 
     @sii_retry
-    async def get_token(self, signed_seed_xml: str) -> str:
+    async def get_token(self, signed_seed_xml: str, empresa: Empresa | None = None) -> str:
         """
         Envía la semilla firmada al SII para obtener el token.
 
@@ -36,8 +40,8 @@ class TokenClient:
         Returns:
             str: XML retornado por el SII que contiene el token.
         """
-        client = await self._get_client()
-        logger.info("Solicitando token al SII", wsdl=self.wsdl_url)
+        client = await self._get_client(empresa=empresa)
+        logger.info("Solicitando token al SII", wsdl=self._client_wsdl_url)
 
         try:
             logger.debug("Enviando XML firmado al SII", xml=signed_seed_xml)

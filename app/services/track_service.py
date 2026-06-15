@@ -188,7 +188,8 @@ class TrackService:
                 rut_empresa=rut_sin_dv,
                 dv_empresa=dv,
                 track_id=dte.track_id,
-                token=token
+                token=token,
+                empresa=empresa,
             )
 
             logger.info("Respuesta raw QueryEstUp", track_id=dte.track_id, response=response_xml[:500])
@@ -238,6 +239,7 @@ class TrackService:
                             fecha_emision_dte=fecha,
                             monto_dte=monto,
                             token=token,
+                            empresa=empresa,
                         )
                         parsed = etree.fromstring(raw.encode("utf-8"), parser)
                         estado = TrackService._find_text_by_localname(parsed, "ESTADO")

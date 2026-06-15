@@ -9,6 +9,7 @@ import httpx
 
 from app.config import get_settings
 from app.domain.exceptions import SiiUploadError
+from app.domain.models import Empresa
 from app.infrastructure.retry import sii_retry
 
 logger = structlog.get_logger(__name__)
@@ -19,10 +20,10 @@ class UploadClient:
     """Cliente HTTP para subir el archivo DTE XML (multipart/form-data) al SII."""
 
     def __init__(self):
-        self.upload_url = settings.sii_upload_url
+        pass
 
     @sii_retry
-    async def upload_dte(self, token: str, xml_content: str, rut_emisor: str, rut_empresa: str) -> str:
+    async def upload_dte(self, token: str, xml_content: str, rut_emisor: str, rut_empresa: str, empresa: Empresa | None = None) -> str:
         """
         Sube un documento XML firmado al SII mediante POST multipart.
         
@@ -35,7 +36,9 @@ class UploadClient:
         Returns:
             str: Respuesta XML cruda del SII indicando el TrackID o error.
         """
-        logger.info("Iniciando upload de DTE al SII", url=self.upload_url)
+        ambiente = empresa.sii_ambiente if empresa is not None else None
+        upload_url = settings.sii_upload_url_for(ambiente)
+        logger.info("Iniciando upload de DTE al SII", url=upload_url)
 
         headers = {
             "Accept": "image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/vnd.ms-powerpoint, application/ms-excel, application/msword, */*",
@@ -85,7 +88,7 @@ class UploadClient:
         try:
             async with httpx.AsyncClient(verify=False, timeout=60.0) as client:
                 response = await client.post(
-                    self.upload_url,
+                    upload_url,
                     headers=headers,
                     files=files
                 )

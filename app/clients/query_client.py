@@ -9,6 +9,7 @@ import structlog
 from app.clients.base_soap import create_soap_client
 from app.config import get_settings
 from app.domain.exceptions import SiiQueryError
+from app.domain.models import Empresa
 from app.infrastructure.retry import sii_retry
 
 logger = structlog.get_logger(__name__)
@@ -19,23 +20,29 @@ class QueryClient:
     """Cliente para consultar estados de envíos (QueryEstUp.jws)."""
 
     def __init__(self):
-        self.wsdl_url_up = settings.sii_wsdl_query_est_up
-        self.wsdl_url_dte = settings.sii_wsdl_query_est_dte
         self._client_up = None
         self._client_dte = None
+        self._client_up_wsdl_url: str | None = None
+        self._client_dte_wsdl_url: str | None = None
 
-    async def _get_client_up(self):
-        if self._client_up is None:
-            self._client_up = create_soap_client(self.wsdl_url_up)
+    async def _get_client_up(self, empresa: Empresa | None = None):
+        ambiente = empresa.sii_ambiente if empresa is not None else None
+        wsdl_url = settings.sii_wsdl_query_est_up_for(ambiente)
+        if self._client_up is None or self._client_up_wsdl_url != wsdl_url:
+            self._client_up = create_soap_client(wsdl_url)
+            self._client_up_wsdl_url = wsdl_url
         return self._client_up
 
-    async def _get_client_dte(self):
-        if self._client_dte is None:
-            self._client_dte = create_soap_client(self.wsdl_url_dte)
+    async def _get_client_dte(self, empresa: Empresa | None = None):
+        ambiente = empresa.sii_ambiente if empresa is not None else None
+        wsdl_url = settings.sii_wsdl_query_est_dte_for(ambiente)
+        if self._client_dte is None or self._client_dte_wsdl_url != wsdl_url:
+            self._client_dte = create_soap_client(wsdl_url)
+            self._client_dte_wsdl_url = wsdl_url
         return self._client_dte
 
     @sii_retry
-    async def get_est_up(self, rut_empresa: str, dv_empresa: str, track_id: str, token: str) -> str:
+    async def get_est_up(self, rut_empresa: str, dv_empresa: str, track_id: str, token: str, empresa: Empresa | None = None) -> str:
         """
         Consulta el estado de un envío (sobre) a través del TrackID.
 
@@ -48,7 +55,7 @@ class QueryClient:
         Returns:
             str: Respuesta XML del estado del envío.
         """
-        client = await self._get_client_up()
+        client = await self._get_client_up(empresa=empresa)
         logger.info("Consultando estado de TrackID", track_id=track_id)
 
         try:
@@ -84,9 +91,10 @@ class QueryClient:
         fecha_emision_dte: str,
         monto_dte: str,
         token: str,
+        empresa: Empresa | None = None,
     ) -> str:
         """Consulta estado detallado de un DTE individual vía QueryEstDte.jws."""
-        client = await self._get_client_dte()
+        client = await self._get_client_dte(empresa=empresa)
         logger.info("Consultando estado detallado DTE", tipo_dte=tipo_dte, folio_dte=folio_dte)
 
         try:
