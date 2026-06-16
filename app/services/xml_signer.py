@@ -164,9 +164,9 @@ class XmlSignerService:
             raise XmlSignError(f"Error firmando documento: {str(e)}") from e
     
     @staticmethod
-      def verify_signatures(
+    def verify_signatures(
         xml_content: str, exclusive: bool | None = None, empresa: object | None = None
-      ) -> list[dict]:
+    ) -> list[dict]:
         """
         Verifica localmente todas las firmas XMLDSIG presentes en el documento.
 
