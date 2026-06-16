@@ -91,6 +91,16 @@ class XmlSignerService:
             elem_to_sign = root
             ref_attr = ""
 
+          # Forzar C14N inclusiva para el sobre EnvioBOLETA (schema exige
+          # el algoritmo inclusivo fijo). También aplicable cuando se firma
+          # el SetDoc (reference_uri == "#SetDoc").
+          try:
+            root_local = etree.QName(root).localname
+          except Exception:
+            root_local = ""
+          if ref_attr == "#SetDoc" or root_local == "EnvioBOLETA":
+            exclusive = False
+
           # 2. C14N del elemento referenciado → digest SHA1
           #    Seleccionamos variante exclusiva/inclusiva según configuración.
           elem_c14n = etree.tostring(elem_to_sign, method="c14n", exclusive=exclusive)
