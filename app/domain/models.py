@@ -44,6 +44,7 @@ class Empresa(Base):
     brand_logo_url = Column(String(500), nullable=True)
     brand_accent_1 = Column(String(20), nullable=True)
     brand_accent_2 = Column(String(20), nullable=True)
+    use_exclusive_c14n = Column(Boolean, nullable=True)
     api_key = Column(String(120), nullable=True, unique=True)
     cert_pfx_path = Column(String(255), nullable=True)
     cert_pfx_base64 = Column(Text, nullable=True)

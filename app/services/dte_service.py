@@ -181,7 +181,9 @@ class DteService:
         # 4. Firmar el documento XML con el Certificado Digital (.pfx)
         cert_data = load_pfx_from_empresa(empresa) if empresa is not None else load_pfx_from_settings()
         uri_referencia = f"#T{tipo_dte.value}F{folio}"
-        xml_firmado = XmlSignerService.sign_document(xml_sin_firma, cert_data, uri_referencia)
+        xml_firmado = XmlSignerService.sign_document(
+            xml_sin_firma, cert_data, uri_referencia, exclusive=None, empresa=empresa
+        )
 
         # 5. Guardar en Base de Datos
         monto_total = sum(d["monto_item"] for d in detalles)
@@ -261,9 +263,11 @@ class DteService:
         cert_data = load_pfx_from_empresa(empresa) if empresa is not None else load_pfx_from_settings()
         DteService._assert_sender_rut_matches_certificate(cert_data)
         envio_xml_firmado = XmlSignerService.sign_document(
-            envio_xml_sin_firma, 
-            cert_data, 
-            reference_uri="#SetDoc" # Firma el SetDTE específicamente
+            envio_xml_sin_firma,
+            cert_data,
+            reference_uri="#SetDoc",  # Firma el SetDTE específicamente
+            exclusive=None,
+            empresa=empresa,
         )
 
         # Guardrail: nunca enviar una firma suelta al SII.
@@ -271,7 +275,7 @@ class DteService:
             raise SiiEnvioError("XML de envío inválido: no contiene EnvioBOLETA (solo Signature)")
 
         # Verificación local de firmas XMLDSIG antes del upload
-        verificaciones = XmlSignerService.verify_signatures(envio_xml_firmado)
+        verificaciones = XmlSignerService.verify_signatures(envio_xml_firmado, exclusive=None, empresa=empresa)
         for v in verificaciones:
             if not v["digest_ok"] or not v["signature_ok"]:
                 logger.error(

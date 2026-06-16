@@ -34,7 +34,13 @@ class XmlSignerService:
     """Servicio para firmar documentos DTE (XMLDSIG)."""
 
     @staticmethod
-    def sign_document(xml_content: str, cert_data: CertificateData, reference_uri: str | None = None) -> str:
+    def sign_document(
+      xml_content: str,
+      cert_data: CertificateData,
+      reference_uri: str | None = None,
+      exclusive: bool | None = None,
+      empresa: object | None = None,
+    ) -> str:
         """
         Firma un documento XML (Boleta, EnvioBOLETA) con XMLDSIG.
 
@@ -60,7 +66,13 @@ class XmlSignerService:
         try:
           from app.config import get_settings
           settings = get_settings()
-          exclusive = bool(getattr(settings, "use_exclusive_c14n", False))
+
+          # Resolver prioridad: argumento explícito > empresa.flag > global setting
+          if exclusive is None:
+            if empresa is not None and getattr(empresa, "use_exclusive_c14n", None) is not None:
+              exclusive = bool(empresa.use_exclusive_c14n)
+            else:
+              exclusive = bool(getattr(settings, "use_exclusive_c14n", False))
 
           root = etree.fromstring(xml_content.encode("latin-1"))
 
@@ -150,9 +162,11 @@ class XmlSignerService:
         except Exception as e:
             logger.error("Error firmando documento XML", error=str(e))
             raise XmlSignError(f"Error firmando documento: {str(e)}") from e
-
+    
     @staticmethod
-    def verify_signatures(xml_content: str) -> list[dict]:
+      def verify_signatures(
+        xml_content: str, exclusive: bool | None = None, empresa: object | None = None
+      ) -> list[dict]:
         """
         Verifica localmente todas las firmas XMLDSIG presentes en el documento.
 
@@ -177,7 +191,12 @@ class XmlSignerService:
         """
         from app.config import get_settings
         settings = get_settings()
-        exclusive = bool(getattr(settings, "use_exclusive_c14n", False))
+
+        if exclusive is None:
+          if empresa is not None and getattr(empresa, "use_exclusive_c14n", None) is not None:
+            exclusive = bool(empresa.use_exclusive_c14n)
+          else:
+            exclusive = bool(getattr(settings, "use_exclusive_c14n", False))
 
         root = etree.fromstring(xml_content.encode("latin-1"))
         results: list[dict] = []
