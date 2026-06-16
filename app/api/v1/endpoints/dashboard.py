@@ -21,6 +21,7 @@ from app.domain.models import Caf, Dte, Empresa
 from app.infrastructure.secrets import encrypt_secret
 from app.services.caf_service import CafService
 from app.services.empresa_service import build_empresa_branding
+from app.services.token_service import token_service
 
 router = APIRouter()
 settings = get_settings()
@@ -561,6 +562,24 @@ async def dashboard_upload_cert_empresa(
     "issuer": certificate.issuer.rfc4514_string(),
     "not_valid_after": certificate.not_valid_after_utc.isoformat(),
   }
+
+
+@router.post("/dashboard/empresas/{empresa_id}/token", include_in_schema=False)
+async def dashboard_refresh_empresa_token(
+  empresa_id: int,
+  db: AsyncSession = Depends(get_db_session),
+  _: None = Depends(_require_dashboard_access),
+) -> dict:
+  """Renueva y cachea el Token SII para la empresa indicada (solo desde el panel)."""
+  empresa = await db.get(Empresa, empresa_id)
+  if empresa is None:
+    raise HTTPException(status_code=404, detail="Empresa no encontrada")
+  try:
+    token = await token_service.get_valid_token(force_refresh=True, empresa=empresa)
+    preview = (token[:10] + '...') if token else None
+    return {"message": "Token renovado exitosamente", "token_preview": preview}
+  except Exception as e:
+    raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/dashboard", include_in_schema=False, response_class=HTMLResponse)
@@ -1580,7 +1599,10 @@ async def dashboard() -> HTMLResponse:
             <td>${empresa.sii_ambiente}</td>
             <td><span class="${badgeClass}">${estado}</span></td>
             <td>${keyLabel}</td>
-            <td><button class="btn secondary" data-empresa-open="${empresa.id}">Seleccionar</button></td>
+            <td>
+              <button class="btn secondary" data-empresa-open="${empresa.id}">Seleccionar</button>
+              <button class="btn" data-empresa-get-token="${empresa.id}">Obtener token</button>
+            </td>
           </tr>
         `;
       }).join('');
@@ -1591,6 +1613,20 @@ async def dashboard() -> HTMLResponse:
           const empresa = empresasState.items.find((item) => item.id === id);
           if (empresa) {
             setEmpresaActiva(empresa).catch(handleEmpresasError);
+          }
+        });
+      });
+
+      body.querySelectorAll('[data-empresa-get-token]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = Number(btn.dataset.empresaGetToken || 0);
+          try {
+            setResultLoading('result-empresas', 'Obteniendo token...');
+            const resp = await fetchJson(`/dashboard/empresas/${encodeURIComponent(id)}/token`, { method: 'POST' });
+            setResult('result-empresas', JSON.stringify(resp));
+            showToast('Token', resp.token_preview ? `Token obtenido: ${resp.token_preview}` : 'Token renovado', 'success');
+          } catch (err) {
+            handleEmpresasError(err);
           }
         });
       });
