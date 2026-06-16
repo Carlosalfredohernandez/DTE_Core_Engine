@@ -88,6 +88,9 @@ class Settings(BaseSettings):
 
     # ── Debug / observabilidad ────────────────────────────────────────────
     sii_debug_tracking: bool = False
+    # Usar canonicalización exclusiva (Exclusive C14N) para XMLDSIG cuando se
+    # requiera por compatibilidad con el SII. Por defecto está deshabilitado.
+    use_exclusive_c14n: bool = False
 
     # ── Propiedades derivadas ─────────────────────────────────────────────
     @property

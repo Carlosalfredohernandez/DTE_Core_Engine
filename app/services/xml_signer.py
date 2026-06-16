@@ -27,6 +27,7 @@ logger = structlog.get_logger(__name__)
 
 DS_NS = "http://www.w3.org/2000/09/xmldsig#"
 C14N_ALG = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
+EXCLUSIVE_C14N_ALG = "http://www.w3.org/2001/10/xml-exc-c14n#"
 
 
 class XmlSignerService:
@@ -57,86 +58,92 @@ class XmlSignerService:
           </Signature>
         """
         try:
-            root = etree.fromstring(xml_content.encode("latin-1"))
+          from app.config import get_settings
+          settings = get_settings()
+          exclusive = bool(getattr(settings, "use_exclusive_c14n", False))
 
-            # 1. Localizar el elemento a firmar por su ID
-            if reference_uri:
-                uri_id = reference_uri.lstrip("#")
-                elem_to_sign = None
-                for elem in root.iter():
-                    if elem.get("ID") == uri_id or elem.get("id") == uri_id:
-                        elem_to_sign = elem
-                        break
-                if elem_to_sign is None:
-                    raise XmlSignError(f"No se encontró el elemento con ID='{uri_id}'")
-                ref_attr = f"#{uri_id}"
-            else:
-                elem_to_sign = root
-                ref_attr = ""
+          root = etree.fromstring(xml_content.encode("latin-1"))
 
-            # 2. C14N del elemento referenciado → digest SHA1
-            #    (sin declarar Transform; el verificador aplica C14N por defecto)
-            elem_c14n = etree.tostring(elem_to_sign, method="c14n")
-            digest_b64 = base64.b64encode(hashlib.sha1(elem_c14n).digest()).decode()
+          # 1. Localizar el elemento a firmar por su ID
+          if reference_uri:
+            uri_id = reference_uri.lstrip("#")
+            elem_to_sign = None
+            for elem in root.iter():
+              if elem.get("ID") == uri_id or elem.get("id") == uri_id:
+                elem_to_sign = elem
+                break
+            if elem_to_sign is None:
+              raise XmlSignError(f"No se encontró el elemento con ID='{uri_id}'")
+            ref_attr = f"#{uri_id}"
+          else:
+            elem_to_sign = root
+            ref_attr = ""
 
-            # 3. Componentes RSA para KeyValue + DER del certificado para X509Data
-            private_key = cert_data.private_key
-            pub_nums = private_key.public_key().public_numbers()
-            n_bytes = pub_nums.n.to_bytes((pub_nums.n.bit_length() + 7) // 8, "big")
-            e_bytes = pub_nums.e.to_bytes((pub_nums.e.bit_length() + 7) // 8, "big")
-            modulus_b64 = base64.b64encode(n_bytes).decode()
-            exponent_b64 = base64.b64encode(e_bytes).decode()
-            cert_der = cert_data.certificate.public_bytes(serialization.Encoding.DER)
-            cert_der_b64 = base64.b64encode(cert_der).decode()
+          # 2. C14N del elemento referenciado → digest SHA1
+          #    Seleccionamos variante exclusiva/inclusiva según configuración.
+          elem_c14n = etree.tostring(elem_to_sign, method="c14n", exclusive=exclusive)
+          digest_b64 = base64.b64encode(hashlib.sha1(elem_c14n).digest()).decode()
 
-            # 4. Construir Signature con SignatureValue vacío (se rellena luego)
-            signature_xml = (
-                f'<Signature xmlns="{DS_NS}">'
-                f'<SignedInfo>'
-                f'<CanonicalizationMethod Algorithm="{C14N_ALG}"></CanonicalizationMethod>'
-                f'<SignatureMethod Algorithm="{DS_NS}rsa-sha1"></SignatureMethod>'
-                f'<Reference URI="{ref_attr}">'
-                f'<DigestMethod Algorithm="{DS_NS}sha1"></DigestMethod>'
-                f'<DigestValue>{digest_b64}</DigestValue>'
-                f'</Reference>'
-                f'</SignedInfo>'
-                f'<SignatureValue/>'
-                f'<KeyInfo>'
-                f'<KeyValue>'
-                f'<RSAKeyValue>'
-                f'<Modulus>{modulus_b64}</Modulus>'
-                f'<Exponent>{exponent_b64}</Exponent>'
-                f'</RSAKeyValue>'
-                f'</KeyValue>'
-                f'<X509Data>'
-                f'<X509Certificate>{cert_der_b64}</X509Certificate>'
-                f'</X509Data>'
-                f'</KeyInfo>'
-                f'</Signature>'
-            )
-            sig_tree = etree.fromstring(signature_xml.encode())
+          # 3. Componentes RSA para KeyValue + DER del certificado para X509Data
+          private_key = cert_data.private_key
+          pub_nums = private_key.public_key().public_numbers()
+          n_bytes = pub_nums.n.to_bytes((pub_nums.n.bit_length() + 7) // 8, "big")
+          e_bytes = pub_nums.e.to_bytes((pub_nums.e.bit_length() + 7) // 8, "big")
+          modulus_b64 = base64.b64encode(n_bytes).decode()
+          exponent_b64 = base64.b64encode(e_bytes).decode()
+          cert_der = cert_data.certificate.public_bytes(serialization.Encoding.DER)
+          cert_der_b64 = base64.b64encode(cert_der).decode()
 
-            # 5. Anexar Signature primero y firmar SignedInfo en el contexto final.
-            #    Esto evita diferencias de canonicalización por namespaces en scope
-            #    entre firmado y verificación.
-            if elem_to_sign is not None:
-              # Salto de línea entre nodo firmado y Signature (no afecta digest
-              # del nodo referenciado por URI).
-              elem_to_sign.tail = "\n"
-            root.append(sig_tree)
-            si_elem = sig_tree.find(f"{{{DS_NS}}}SignedInfo")
-            si_c14n = etree.tostring(si_elem, method="c14n")
-            sig_bytes = private_key.sign(si_c14n, asym_padding.PKCS1v15(), hashes.SHA1())
-            sig_b64 = base64.b64encode(sig_bytes).decode()
+          # 4. Construir Signature con SignatureValue vacío (se rellena luego)
+          c14n_alg = EXCLUSIVE_C14N_ALG if exclusive else C14N_ALG
 
-            # 6. Insertar SignatureValue
-            sig_tree.find(f"{{{DS_NS}}}SignatureValue").text = sig_b64
+          signature_xml = (
+            f'<Signature xmlns="{DS_NS}">'
+            f'<SignedInfo>'
+            f'<CanonicalizationMethod Algorithm="{c14n_alg}"></CanonicalizationMethod>'
+            f'<SignatureMethod Algorithm="{DS_NS}rsa-sha1"></SignatureMethod>'
+            f'<Reference URI="{ref_attr}">'
+            f'<DigestMethod Algorithm="{DS_NS}sha1"></DigestMethod>'
+            f'<DigestValue>{digest_b64}</DigestValue>'
+            f'</Reference>'
+            f'</SignedInfo>'
+            f'<SignatureValue/>'
+            f'<KeyInfo>'
+            f'<KeyValue>'
+            f'<RSAKeyValue>'
+            f'<Modulus>{modulus_b64}</Modulus>'
+            f'<Exponent>{exponent_b64}</Exponent>'
+            f'</RSAKeyValue>'
+            f'</KeyValue>'
+            f'<X509Data>'
+            f'<X509Certificate>{cert_der_b64}</X509Certificate>'
+            f'</X509Data>'
+            f'</KeyInfo>'
+            f'</Signature>'
+          )
+          sig_tree = etree.fromstring(signature_xml.encode())
 
-            # Serialización final en C14N (como texto canonizado) para mantener
-            # estabilidad byte-a-byte respecto a la variante que ya fue aceptada
-            # por el SII en este proyecto.
-            c14n_content = etree.tostring(root, method="c14n").decode("latin-1")
-            return '<?xml version="1.0" encoding="ISO-8859-1"?>\n' + c14n_content
+          # 5. Anexar Signature primero y firmar SignedInfo en el contexto final.
+          #    Esto evita diferencias de canonicalización por namespaces en scope
+          #    entre firmado y verificación.
+          if elem_to_sign is not None:
+            # Salto de línea entre nodo firmado y Signature (no afecta digest
+            # del nodo referenciado por URI).
+            elem_to_sign.tail = "\n"
+          root.append(sig_tree)
+          si_elem = sig_tree.find(f"{{{DS_NS}}}SignedInfo")
+          si_c14n = etree.tostring(si_elem, method="c14n", exclusive=exclusive)
+          sig_bytes = private_key.sign(si_c14n, asym_padding.PKCS1v15(), hashes.SHA1())
+          sig_b64 = base64.b64encode(sig_bytes).decode()
+
+          # 6. Insertar SignatureValue
+          sig_tree.find(f"{{{DS_NS}}}SignatureValue").text = sig_b64
+
+          # Serialización final en C14N (como texto canonizado) para mantener
+          # estabilidad byte-a-byte respecto a la variante que ya fue aceptada
+          # por el SII en este proyecto.
+          c14n_content = etree.tostring(root, method="c14n", exclusive=exclusive).decode("latin-1")
+          return '<?xml version="1.0" encoding="ISO-8859-1"?>\n' + c14n_content
 
         except XmlSignError:
             raise
@@ -168,6 +175,10 @@ class XmlSignerService:
             "si_c14n_hex": str,
           }
         """
+        from app.config import get_settings
+        settings = get_settings()
+        exclusive = bool(getattr(settings, "use_exclusive_c14n", False))
+
         root = etree.fromstring(xml_content.encode("latin-1"))
         results: list[dict] = []
 
@@ -212,7 +223,7 @@ class XmlSignerService:
                     elem_to_verify = parent_standalone
 
                 computed = base64.b64encode(
-                    hashlib.sha1(etree.tostring(elem_to_verify, method="c14n")).digest()
+                  hashlib.sha1(etree.tostring(elem_to_verify, method="c14n", exclusive=exclusive)).digest()
                 ).decode()
                 result["computed_digest"] = computed
 
@@ -239,7 +250,7 @@ class XmlSignerService:
                 pub_key = load_der_x509_certificate(cert_der).public_key()
 
                 si_elem = sig.find(f"{{{DS_NS}}}SignedInfo")
-                si_c14n = etree.tostring(si_elem, method="c14n")
+                si_c14n = etree.tostring(si_elem, method="c14n", exclusive=exclusive)
                 result["si_c14n_hex"] = si_c14n[:200].decode("latin-1")
 
                 try:
