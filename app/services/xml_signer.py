@@ -103,7 +103,26 @@ class XmlSignerService:
 
           # 2. C14N del elemento referenciado → digest SHA1
           #    Seleccionamos variante exclusiva/inclusiva según configuración.
-          elem_c14n = etree.tostring(elem_to_sign, method="c14n", exclusive=exclusive)
+          # Canonicalizar el elemento referenciado en un contexto standalone
+          # (igual que en verify_signatures) para evitar diferencias por namespaces.
+          if ref_attr:
+            parent = elem_to_sign.getparent()
+            if parent is not None:
+              parent_standalone = etree.fromstring(etree.tostring(parent))
+              elem_for_digest = None
+              for e in parent_standalone.iter():
+                if e.get("ID") == uri_id or e.get("id") == uri_id:
+                  elem_for_digest = e
+                  break
+              if elem_for_digest is None:
+                elem_for_digest = elem_to_sign
+            else:
+              elem_for_digest = elem_to_sign
+          else:
+            parent_standalone = etree.fromstring(etree.tostring(root))
+            elem_for_digest = parent_standalone
+
+          elem_c14n = etree.tostring(elem_for_digest, method="c14n", exclusive=exclusive)
           digest_b64 = base64.b64encode(hashlib.sha1(elem_c14n).digest()).decode()
 
           # 3. Componentes RSA para KeyValue + DER del certificado para X509Data
