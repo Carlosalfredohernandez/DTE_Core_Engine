@@ -125,6 +125,9 @@ async def generar_boleta(
         raise HTTPException(status_code=400, detail=e.message)
 
 
+
+
+
 @router.get("/{id}", response_model=BoletaResponse)
 async def obtener_boleta(
     id: int,
