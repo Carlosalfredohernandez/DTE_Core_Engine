@@ -2048,7 +2048,8 @@ async def dashboard() -> HTMLResponse:
         const data = await fetchJson(`/api/v1/boleta/next-folio?tipo_dte=${encodeURIComponent(tipo)}`);
         el.textContent = `Folio disponible: ${data.folio_disponible}  (CAF ${data.caf_id} rango ${data.rango_desde}-${data.rango_hasta})`;
       } catch (err) {
-        const message = err && err.data ? (err.data.detail || err.data) : (err || 'error');
+        const raw = err && err.data ? (err.data.detail || err.data) : (err || 'error');
+        const message = typeof raw === 'object' ? JSON.stringify(raw) : String(raw);
         el.textContent = `Folio: - (${message})`;
       }
     }
@@ -2132,7 +2133,8 @@ async def dashboard() -> HTMLResponse:
               const tipo = Number($('boletaTipo').value || 0);
               await fetchJson(`/api/v1/boleta/next-folio?tipo_dte=${encodeURIComponent(tipo)}`);
             } catch (err) {
-              const msg = err && err.data ? (err.data.detail || err.data) : 'No hay folios disponibles para el tipo/empresa seleccionados.';
+              const raw = err && err.data ? (err.data.detail || err.data) : 'No hay folios disponibles para el tipo/empresa seleccionados.';
+              const msg = typeof raw === 'object' ? JSON.stringify(raw) : String(raw);
               throw { status: 0, data: `Fallo pre-validación folio: ${msg}` };
             }
             data = await fetchJson('/api/v1/boleta/generar', { method: 'POST', json: boletaPayload() });
