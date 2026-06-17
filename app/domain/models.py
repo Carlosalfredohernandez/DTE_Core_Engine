@@ -67,6 +67,7 @@ class Caf(Base):
     rango_hasta = Column(Integer, nullable=False)
     folio_actual = Column(Integer, nullable=False)
     caf_xml = Column(Text, nullable=False)
+    ambiente = Column(String(20), nullable=True)
     fecha_carga = Column(DateTime, default=func.now())
     activo = Column(Boolean, default=True)
 

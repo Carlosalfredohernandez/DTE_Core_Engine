@@ -8,7 +8,7 @@ import re
 from typing import Any
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from lxml import etree
 from cryptography.x509.oid import NameOID
@@ -121,9 +121,11 @@ class DteService:
             fecha_emision = datetime.date.today()
 
         # 1. Obtener y reservar folio del CAF
+        ambiente_value = empresa.sii_ambiente if empresa is not None else settings.sii_ambiente.value
         stmt = select(Caf).where(
             Caf.tipo_dte == tipo_dte.value,
-            Caf.activo == True
+            Caf.activo == True,
+            or_(Caf.ambiente == ambiente_value, Caf.ambiente.is_(None)),
         ).order_by(Caf.id.asc()).limit(1)
         if empresa is not None:
             stmt = stmt.where(Caf.empresa_id == empresa.id)
