@@ -1986,7 +1986,7 @@ async def dashboard() -> HTMLResponse:
       // Enviar X-Empresa-Id cuando hay una empresa activa seleccionada en el dashboard.
       // Esto permite usar la API key global y especificar la empresa objetivo.
       try {
-        const empresaId = empresasState && empresasState.selectedId ? empresasState.selectedId : null;
+        const empresaId = (empresasState && empresasState.selectedId) ? empresasState.selectedId : (persistedEmpresaId || null);
         if (empresaId) headers.set('X-Empresa-Id', String(empresaId));
       } catch (e) {
         // seguridad: si empresasState no está definido, no hacemos nada
