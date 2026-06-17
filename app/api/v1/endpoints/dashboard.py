@@ -1114,6 +1114,7 @@ async def dashboard() -> HTMLResponse:
             <option value="39">39 - Boleta afecta</option>
             <option value="41">41 - Boleta exenta</option>
           </select>
+          <span id="boletaFolioInfo" class="pill" style="margin-left:12px;">Folio disponible: -</span>
           <input class="input" id="boletaFecha" type="date" />
           <input class="input" id="boletaIdEnviar" placeholder="ID DTE para enviar" />
         </div>
@@ -1499,6 +1500,7 @@ async def dashboard() -> HTMLResponse:
       renderEmpresaRestaurada(empresa);
       await loadBranding().catch(() => {});
       await loadHistory(1).catch(() => {});
+      await loadNextFolio().catch(() => {});
       renderFlowChecklist();
       showToast('Empresa activa', `${empresa.razon_social_emisor} quedó como empresa activa.`, 'success');
       setConsole(`Empresa activa: ${empresa.razon_social_emisor}`);
@@ -2028,6 +2030,29 @@ async def dashboard() -> HTMLResponse:
       return payload;
     }
 
+    async function loadNextFolio() {
+      const el = $('boletaFolioInfo');
+      if (!el) return;
+      const empresa = getEmpresaActiva();
+      const tipo = Number($('boletaTipo').value || 0);
+      if (!empresa) {
+        el.textContent = 'Folio disponible: - (sin empresa)';
+        return;
+      }
+      if (!tipo) {
+        el.textContent = 'Folio disponible: - (tipo indefinido)';
+        return;
+      }
+      el.textContent = 'Consultando folio...';
+      try {
+        const data = await fetchJson(`/api/v1/boleta/next-folio?tipo_dte=${encodeURIComponent(tipo)}`);
+        el.textContent = `Folio disponible: ${data.folio_disponible}  (CAF ${data.caf_id} rango ${data.rango_desde}-${data.rango_hasta})`;
+      } catch (err) {
+        const message = err && err.data ? (err.data.detail || err.data) : (err || 'error');
+        el.textContent = `Folio: - (${message})`;
+      }
+    }
+
     function requireActiveEmpresaSelection() {
       const selector = $('empresaActivaTop');
       const selectedId = Number(selector?.value || 0);
@@ -2102,6 +2127,14 @@ async def dashboard() -> HTMLResponse:
           }
           case 'boleta-generar':
             requireActiveEmpresaSelection();
+            // Verificar folio disponible antes de intentar generar (no reserva, solo validación)
+            try {
+              const tipo = Number($('boletaTipo').value || 0);
+              await fetchJson(`/api/v1/boleta/next-folio?tipo_dte=${encodeURIComponent(tipo)}`);
+            } catch (err) {
+              const msg = err && err.data ? (err.data.detail || err.data) : 'No hay folios disponibles para el tipo/empresa seleccionados.';
+              throw { status: 0, data: `Fallo pre-validación folio: ${msg}` };
+            }
             data = await fetchJson('/api/v1/boleta/generar', { method: 'POST', json: boletaPayload() });
             refreshHistory = true;
             break;
@@ -2192,6 +2225,7 @@ async def dashboard() -> HTMLResponse:
     $('btnHistoryNext').addEventListener('click', () => { if (historyState.page < historyState.lastPage) loadHistory(historyState.page + 1); });
     $('btnHistoryRefresh').addEventListener('click', () => loadHistory(historyState.page));
     $('historyPageSize').addEventListener('change', () => loadHistory(1));
+    $('boletaTipo').addEventListener('change', () => loadNextFolio());
     $('btnEmpresasLoad').addEventListener('click', () => loadEmpresas().catch(handleEmpresasError));
     $('btnEmpresaNuevo').addEventListener('click', clearEmpresaForm);
     $('btnEmpresaCrear').addEventListener('click', () => createEmpresa().catch(handleEmpresasError));

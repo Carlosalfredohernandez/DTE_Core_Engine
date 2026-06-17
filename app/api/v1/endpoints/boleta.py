@@ -22,6 +22,9 @@ from app.services.xml_signer import XmlSignerService
 from app.services.caf_service import CafService
 from app.domain.exceptions import DteEngineError
 from app.services.dte_service import DteService
+from app.domain.enums import TipoDte
+from app.domain.models import Caf
+from sqlalchemy import select, or_
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
@@ -317,3 +320,58 @@ async def enviar_boleta(
     except Exception as e:
         logger.error("Error inesperado al enviar boleta", error=str(e))
         raise HTTPException(status_code=500, detail="Error interno al enviar al SII")
+
+
+@router.get("/next-folio")
+async def folio_disponible(
+    tipo_dte: TipoDte,
+    db: AsyncSession = Depends(get_db_session),
+    empresa = Depends(get_current_empresa),
+    _: str = Depends(get_api_key),
+):
+    """Devuelve el folio disponible que se tomaría al generar una boleta, respetando el `ambiente` de la empresa.
+
+    No reserva ni incrementa el folio; es solo informativo.
+    """
+    ambiente_value = empresa.sii_ambiente if empresa is not None else None
+
+    # Preferir CAF explícito para el ambiente
+    stmt_strict = select(Caf).where(
+        Caf.tipo_dte == tipo_dte.value,
+        Caf.activo == True,
+        Caf.ambiente == ambiente_value,
+    ).order_by(Caf.id.asc()).limit(1)
+    if empresa is not None:
+        stmt_strict = stmt_strict.where(Caf.empresa_id == empresa.id)
+
+    result = await db.execute(stmt_strict)
+    caf_db = result.scalar_one_or_none()
+
+    # Fallback: permitir CAFs sin ambiente
+    if caf_db is None:
+        stmt = select(Caf).where(
+            Caf.tipo_dte == tipo_dte.value,
+            Caf.activo == True,
+            or_(Caf.ambiente == ambiente_value, Caf.ambiente.is_(None)),
+        ).order_by(Caf.id.asc()).limit(1)
+        if empresa is not None:
+            stmt = stmt.where(Caf.empresa_id == empresa.id)
+
+        result = await db.execute(stmt)
+        caf_db = result.scalar_one_or_none()
+
+    if not caf_db:
+        raise HTTPException(status_code=404, detail="No hay CAFs activos para el tipo/empresa/ambiente solicitados")
+
+    folio = caf_db.folio_actual
+    if folio > caf_db.rango_hasta:
+        raise HTTPException(status_code=404, detail="Los folios del CAF están agotados")
+
+    return {
+        "caf_id": caf_db.id,
+        "tipo_dte": tipo_dte.value,
+        "folio_disponible": folio,
+        "rango_desde": caf_db.rango_desde,
+        "rango_hasta": caf_db.rango_hasta,
+        "ambiente": caf_db.ambiente,
+    }
