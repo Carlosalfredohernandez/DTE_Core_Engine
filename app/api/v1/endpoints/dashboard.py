@@ -1622,7 +1622,7 @@ async def dashboard() -> HTMLResponse:
           const id = Number(btn.dataset.empresaGetToken || 0);
           try {
             setResultLoading('result-empresas', 'Obteniendo token...');
-            const resp = await fetchJson(`/dashboard/empresas/${encodeURIComponent(id)}/token`, { method: 'POST' });
+            const resp = await fetchJson(`/api/v1/dashboard/empresas/${encodeURIComponent(id)}/token`, { method: 'POST' });
             setResult('result-empresas', JSON.stringify(resp));
             showToast('Token', resp.token_preview ? `Token obtenido: ${resp.token_preview}` : 'Token renovado', 'success');
           } catch (err) {
