@@ -1452,6 +1452,20 @@ async def dashboard() -> HTMLResponse:
         selector.value = String(current.id);
         renderEmpresaEstado(current);
         renderEmpresaRestaurada(current);
+        // mostrar badge de ambiente
+        let badge = document.getElementById('empresaAmbienteBadge');
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.id = 'empresaAmbienteBadge';
+          badge.style.marginLeft = '12px';
+          badge.style.padding = '6px 10px';
+          badge.style.borderRadius = '12px';
+          badge.style.fontSize = '12px';
+          badge.style.background = 'rgba(0,0,0,0.16)';
+          badge.style.color = 'var(--primary)';
+          selector.parentElement && selector.parentElement.appendChild(badge);
+        }
+        badge.textContent = `Ambiente: ${current.sii_ambiente || 'certificacion'}`;
       } else if (empresasState.items.length) {
         renderEmpresaEstado(empresasState.items[0]);
         renderEmpresaRestaurada(empresasState.items[0]);

@@ -122,16 +122,30 @@ class DteService:
 
         # 1. Obtener y reservar folio del CAF
         ambiente_value = empresa.sii_ambiente if empresa is not None else settings.sii_ambiente.value
-        stmt = select(Caf).where(
+        # Intentamos primero obtener un CAF explícito para el ambiente (producción/certificación)
+        stmt_strict = select(Caf).where(
             Caf.tipo_dte == tipo_dte.value,
             Caf.activo == True,
-            or_(Caf.ambiente == ambiente_value, Caf.ambiente.is_(None)),
+            Caf.ambiente == ambiente_value,
         ).order_by(Caf.id.asc()).limit(1)
         if empresa is not None:
-            stmt = stmt.where(Caf.empresa_id == empresa.id)
-        
-        result = await session.execute(stmt)
+            stmt_strict = stmt_strict.where(Caf.empresa_id == empresa.id)
+
+        result = await session.execute(stmt_strict)
         caf_db = result.scalar_one_or_none()
+
+        # Fallback: si no hay CAF explícito para el ambiente, permitimos CAFs sin ambiente (compatibilidad)
+        if caf_db is None:
+            stmt = select(Caf).where(
+                Caf.tipo_dte == tipo_dte.value,
+                Caf.activo == True,
+                or_(Caf.ambiente == ambiente_value, Caf.ambiente.is_(None)),
+            ).order_by(Caf.id.asc()).limit(1)
+            if empresa is not None:
+                stmt = stmt.where(Caf.empresa_id == empresa.id)
+
+            result = await session.execute(stmt)
+            caf_db = result.scalar_one_or_none()
 
         if not caf_db:
             raise CafNotFoundError(tipo_dte.value)
