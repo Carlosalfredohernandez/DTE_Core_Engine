@@ -42,6 +42,7 @@ async def upload_caf(
             rango_desde=caf_info["rango"]["desde"],
             rango_hasta=caf_info["rango"]["hasta"],
             folio_actual=caf_info["rango"]["desde"],
+            ambiente=empresa.sii_ambiente,
             caf_xml=xml_str,
             activo=True
         )

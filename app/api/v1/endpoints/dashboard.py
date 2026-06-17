@@ -506,6 +506,7 @@ async def dashboard_upload_caf_empresa(
     rango_desde=caf_info["rango"]["desde"],
     rango_hasta=caf_info["rango"]["hasta"],
     folio_actual=caf_info["rango"]["desde"],
+    ambiente=empresa.sii_ambiente,
     caf_xml=xml_str,
     activo=True,
   )
@@ -1608,11 +1609,40 @@ async def dashboard() -> HTMLResponse:
       }).join('');
 
       body.querySelectorAll('[data-empresa-open]').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           const id = Number(btn.dataset.empresaOpen || 0);
           const empresa = empresasState.items.find((item) => item.id === id);
           if (empresa) {
-            setEmpresaActiva(empresa).catch(handleEmpresasError);
+            try {
+              const useProd = window.confirm(`Abrir empresa "${empresa.razon_social_emisor}" en modo PRODUCCIÓN? (Cancelar = certificación)`);
+              const ambiente = useProd ? 'produccion' : 'certificacion';
+              // Persistir cambio de ambiente en la empresa via API
+              const payload = {
+                rut_emisor: empresa.rut_emisor,
+                rut_envia: empresa.rut_envia,
+                razon_social_emisor: empresa.razon_social_emisor,
+                giro_emisor: empresa.giro_emisor,
+                acteco_emisor: empresa.acteco_emisor || 0,
+                dir_origen: empresa.dir_origen || '',
+                cmna_origen: empresa.cmna_origen || '',
+                ciudad_origen: empresa.ciudad_origen || '',
+                sii_ambiente: ambiente,
+                sii_fecha_resolucion: empresa.sii_fecha_resolucion || '',
+                sii_numero_resolucion: empresa.sii_numero_resolucion || 0,
+                api_key: empresa.api_key || null,
+                brand_name: empresa.brand_name || null,
+                brand_logo_url: empresa.brand_logo_url || null,
+                brand_accent_1: empresa.brand_accent_1 || null,
+                brand_accent_2: empresa.brand_accent_2 || null,
+                cert_pfx_path: empresa.cert_pfx_path || null,
+              };
+              await fetchJson(`/api/v1/dashboard/empresas/${empresa.id}`, { method: 'PUT', json: payload });
+              // actualizar en memoria y activar
+              empresa.sii_ambiente = ambiente;
+              await setEmpresaActiva(empresa).catch(handleEmpresasError);
+            } catch (err) {
+              handleEmpresasError(err);
+            }
           }
         });
       });
