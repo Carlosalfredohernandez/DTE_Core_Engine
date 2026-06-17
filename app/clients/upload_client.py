@@ -82,7 +82,8 @@ class UploadClient:
             "dvSender": (None, clean_emisor[-1]),
             "rutCompany": (None, clean_empresa[:-1]),
             "dvCompany": (None, clean_empresa[-1]),
-            "archivo": ("boleta.xml", xml_payload, "text/xml"),
+            # Enviar el XML con charset explícito para evitar confusiones de encoding en el SII
+            "archivo": ("boleta.xml", xml_payload, "text/xml; charset=ISO-8859-1"),
         }
 
         try:
