@@ -211,7 +211,11 @@ class XmlBuilderService:
         root = etree.Element("EnvioBOLETA", nsmap=nsmap)
         root.set("version", "1.0")
         # xsi:schemaLocation es obligatorio: sin él el SII devuelve SCH-00001: Invalid Schema Name
-        root.set(f"{{{xsi_ns}}}schemaLocation", f"{sii_ns} EnvioBOLETA_v11.xsd")
+        # El segundo token debe ser una URL absoluta al XSD; antes se enviaba solo el nombre de archivo.
+        root.set(
+            f"{{{xsi_ns}}}schemaLocation",
+            f"{sii_ns} {sii_ns}/EnvioBOLETA_v11.xsd",
+        )
         
         rut_emisor = XmlBuilderService._normalize_rut(str(XmlBuilderService._value(empresa, "rut_emisor", settings.rut_emisor)))
         rut_envia = XmlBuilderService._normalize_rut(str(XmlBuilderService._value(empresa, "rut_envia", settings.rut_envia)))
