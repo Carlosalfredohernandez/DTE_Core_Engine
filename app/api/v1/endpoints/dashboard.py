@@ -20,6 +20,7 @@ from app.config import get_settings
 from app.domain.models import Caf, Dte, Empresa
 from app.infrastructure.secrets import encrypt_secret
 from app.services.caf_service import CafService
+from app.services.dte_service import DteService
 from app.services.empresa_service import build_empresa_branding
 from app.services.token_service import token_service
 
@@ -497,6 +498,12 @@ async def dashboard_upload_caf_empresa(
   try:
     xml_str = content.decode("latin-1")
     caf_info = CafService.parse_caf_xml(xml_str)
+    # Validar que el RUT del CAF coincida con la empresa
+    caf_emisor = caf_info.get("emisor_rut", "") if isinstance(caf_info, dict) else ""
+    caf_emisor_norm = DteService._normalize_rut(caf_emisor)
+    empresa_rut_norm = DteService._normalize_rut(getattr(empresa, "rut_emisor", "") or "")
+    if empresa_rut_norm and caf_emisor_norm and empresa_rut_norm != caf_emisor_norm:
+      raise HTTPException(status_code=400, detail=f"RUT del CAF ({caf_emisor}) no coincide con empresa.rut_emisor ({empresa.rut_emisor})")
   except Exception as exc:
     raise HTTPException(status_code=400, detail=f"CAF inválido: {str(exc)}") from exc
 

@@ -31,6 +31,7 @@ class CafInfo(TypedDict):
     fecha_autorizacion: str
     private_key_pem: str
     caf_xml_element: etree._Element
+    emisor_rut: str
 
 
 class CafService:
@@ -103,12 +104,16 @@ class CafService:
             if caf_element is None:
                 raise CafError("Archivo CAF no contiene elemento <CAF>")
 
+            # Extraer RUT emisor si está presente (elemento <RE> en DA o en cualquier parte)
+            emisor_rut = (da.findtext("RE") or root.findtext(".//RE") or "").strip()
+
             return CafInfo(
                 tipo_dte=tipo_dte,
                 rango=RangoCaf(desde=desde, hasta=hasta),
                 fecha_autorizacion=fecha_aut,
                 private_key_pem=rsask,
-                caf_xml_element=caf_element
+                caf_xml_element=caf_element,
+                emisor_rut=emisor_rut,
             )
         except etree.XMLSyntaxError as e:
             raise CafError(f"Error parseando CAF XML: {str(e)}") from e

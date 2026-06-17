@@ -10,6 +10,7 @@ from sqlalchemy import select
 from app.api.deps import get_api_key, get_current_empresa, get_db_session
 from app.domain.models import Caf
 from app.services.caf_service import CafService
+from app.services.dte_service import DteService
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
@@ -34,6 +35,15 @@ async def upload_caf(
         xml_str = content.decode("latin-1")
         # Validar y parsear
         caf_info = CafService.parse_caf_xml(xml_str)
+
+        # Validar que el RUT del CAF coincida con la empresa activa
+        caf_emisor = caf_info.get("emisor_rut", "") if isinstance(caf_info, dict) else ""
+        caf_emisor_norm = DteService._normalize_rut(caf_emisor)
+        empresa_rut_norm = DteService._normalize_rut(getattr(empresa, "rut_emisor", "") or "")
+        if empresa_rut_norm and caf_emisor_norm and empresa_rut_norm != caf_emisor_norm:
+            await db.rollback()
+            logger.warning("CAF RUT no coincide con empresa", empresa_rut=empresa.rut_emisor, caf_rut=caf_emisor)
+            raise HTTPException(status_code=400, detail=f"RUT del CAF ({caf_emisor}) no coincide con empresa.rut_emisor ({empresa.rut_emisor})")
         
         # Guardar en DB
         nuevo_caf = Caf(
