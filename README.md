@@ -45,3 +45,23 @@ API REST en Python (FastAPI) para emisión, firma y envío de Documentos Tributa
 * `RutReceptor` de carátula: `60803000-K`.
 * Nombre de archivo multipart en upload: `boleta.xml`.
 * Receptor genérico para boleta 39 en este flujo: `66666666-6`.
+
+## **Actualizaciones Recientes**
+
+- **Persistencia de DTE**: El flujo de reconstrucción ahora crea o actualiza registros `Dte` en la base de datos cuando se ejecuta desde el panel (dry-run o envío). Se almacenan `xml_documento` y `xml_envio` para auditoría.
+- **Registro SII (SiiLog)**: Se registra en la tabla `sii_log` tanto la acción de reconstrucción (`REBUILD`) como la respuesta del SII tras un `UPLOAD`. Si la respuesta incluye `TRACKID`, el `Dte.track_id` se actualiza y el estado pasa a `ENVIADO`.
+- **Confirmación UI antes de enviar**: Para evitar envíos accidentales, el panel solicita escribir exactamente CONFIRMAR antes de ejecutar `send=true` desde el botón "Reconstruir y enviar (template)".
+- **Modo test sin firma**: Para pruebas rápidas sin un certificado real, establecer `DTE_TEST_NO_SIGN=1` permite ejecutar dry-runs sin firmar. Para envíos reales, deje `DTE_TEST_NO_SIGN` en `0` o elimínela.
+- **Nuevo endpoint y UI**: Se añadió el endpoint `POST /api/v1/dte/send` y la acción en el dashboard que usa la plantilla de envío. El botón permite reconstruir desde template, forzar folio y opcionalmente enviar al SII.
+- **Herramientas de diagnóstico**: Se incluyen utilidades en la carpeta tools para consultar TrackIDs (`tools/query_track_status.py`), listar envíos (`tools/query_tracks.py`) y obtener DTEs por id (`tools/get_dte_by_id.py`). Útiles para depurar y confirmar respuestas SII.
+- **Pruebas automatizadas**: Se agregó una prueba de integración dry-run (tests/test_dte_send.py) y fixtures en tests/conftest.py para ejecutar flujo sin firma.
+
+Cómo probar un envío real (resumen):
+
+1. Asegure `CERT_MASTER_KEY` en el entorno y suba el PFX a la empresa activa desde el panel.
+2. Desactive `DTE_TEST_NO_SIGN` (o póngala a `0`).
+3. Inicie la API (por ejemplo con uvicorn) y abra el dashboard.
+4. Genere o seleccione un DTE, coloque su ID en "ID DTE para enviar", marque "Enviar al SII" y escriba CONFIRMAR cuando se solicite.
+5. Verifique en la UI la respuesta o inspeccione la tabla `sii_log` y el registro `dtes` para ver `track_id`.
+
+Si necesitas, puedo añadir un test que simule `send=true` con el cliente de upload mockeado para validar que se crea `SiiLog` y se actualiza `Dte.track_id` automáticamente.
