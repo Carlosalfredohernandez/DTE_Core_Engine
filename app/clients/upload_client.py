@@ -8,6 +8,9 @@ import structlog
 import httpx
 
 from app.config import get_settings
+import os
+import uuid
+from pathlib import Path
 from app.domain.exceptions import SiiUploadError
 from app.domain.models import Empresa
 from app.infrastructure.retry import sii_retry
@@ -77,22 +80,64 @@ class UploadClient:
             ) from e
 
         # En el SII DTEUpload, se envían los primeros N-1 caracteres como RUT y el último como DV
+        filename = os.environ.get("DTE_FILE_NAME", "boleta.xml")
         files = {
             "rutSender": (None, clean_emisor[:-1]),
             "dvSender": (None, clean_emisor[-1]),
             "rutCompany": (None, clean_empresa[:-1]),
             "dvCompany": (None, clean_empresa[-1]),
             # Enviar el XML con charset explícito para evitar confusiones de encoding en el SII
-            "archivo": ("boleta.xml", xml_payload, "text/xml; charset=ISO-8859-1"),
+            "archivo": (filename, xml_payload, "text/xml; charset=ISO-8859-1"),
         }
+
+        def _build_multipart_bytes(files_dict: dict[str, tuple]) -> bytes:
+            boundary = f"----{uuid.uuid4().hex}"
+            buf = bytearray()
+            for name, part in files_dict.items():
+                buf.extend((f"--{boundary}\r\n").encode("latin-1"))
+                if isinstance(part, tuple) and part[0] is not None:
+                    filename, data, content_type = part
+                    buf.extend((f'Content-Disposition: form-data; name="{name}"; filename="{filename}"\r\n').encode("latin-1"))
+                    buf.extend((f"Content-Type: {content_type}\r\n\r\n").encode("latin-1"))
+                    if isinstance(data, bytes):
+                        buf.extend(data)
+                    else:
+                        buf.extend(str(data).encode("latin-1"))
+                    buf.extend(b"\r\n")
+                else:
+                    # value-only field
+                    value = part[1] if isinstance(part, tuple) and len(part) > 1 else (part if not isinstance(part, tuple) else part[0])
+                    buf.extend((f'Content-Disposition: form-data; name="{name}"\r\n\r\n').encode("latin-1"))
+                    buf.extend(str(value).encode("latin-1"))
+                    buf.extend(b"\r\n")
+
+            buf.extend((f"--{boundary}--\r\n").encode("latin-1"))
+            return boundary, bytes(buf)
 
         try:
             async with httpx.AsyncClient(verify=False, timeout=60.0) as client:
-                response = await client.post(
-                    upload_url,
-                    headers=headers,
-                    files=files
-                )
+                # Si se solicita, construir y volcar el multipart antes de enviarlo
+                dump_flag = os.environ.get("DUMP_DTE_MULTIPART", "0")
+                if dump_flag == "1":
+                    boundary, multipart_bytes = _build_multipart_bytes(files)
+                    dump_dir = Path("tools")
+                    dump_dir.mkdir(parents=True, exist_ok=True)
+                    (dump_dir / "last_multipart.bin").write_bytes(multipart_bytes)
+                    (dump_dir / "last_multipart.txt").write_text(multipart_bytes.decode("latin-1", errors="replace"), encoding="latin-1")
+                    # Usar el contenido ya construido
+                    headers_local = headers.copy()
+                    headers_local["Content-Type"] = f"multipart/form-data; boundary={boundary}"
+                    response = await client.post(
+                        upload_url,
+                        headers=headers_local,
+                        content=multipart_bytes,
+                    )
+                else:
+                    response = await client.post(
+                        upload_url,
+                        headers=headers,
+                        files=files
+                    )
 
                 # El SII devuelve código HTTP 200 aunque el contenido sea un error XML
                 if response.status_code != 200:

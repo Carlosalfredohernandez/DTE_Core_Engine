@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<EnvioBOLETA xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0" xsi:schemaLocation="http://www.sii.cl/SiiDte http://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd">
+  <SetDTE ID="SetDoc">
+    <Caratula version="1.0">
+      <RutEmisor>77710916-2</RutEmisor>
+      <RutEnvia>77710916-2</RutEnvia>
+      <RutReceptor>60803000-K</RutReceptor>
+      <FchResol>2026-01-01</FchResol>
+      <NroResol>300</NroResol>
+      <TmstFirmaEnv>2026-01-01T00:00:00</TmstFirmaEnv>
+    </Caratula>
+    <!-- Documento placeholder: será reemplazado por tools/rebuild_from_template_and_upload.py -->
+    <Documento ID="T39PLACEHOLDER">
+    </Documento>
+  </SetDTE>
+</EnvioBOLETA>

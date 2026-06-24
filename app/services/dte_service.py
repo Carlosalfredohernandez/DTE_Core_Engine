@@ -327,6 +327,13 @@ class DteService:
 
         dte.xml_envio = envio_xml_firmado
 
+        # Persistir el envio XML antes del upload para evitar desalineos
+        # entre el XML en la BD y el contenido registrado en SiiLog si
+        # la operación falla o hay reintentos concurrentes.
+        session.add(dte)
+        await session.commit()
+        await session.refresh(dte)
+
         # 3. Autenticación y Upload
         token = await token_service.get_valid_token(empresa=empresa)
         uploader = UploadClient()

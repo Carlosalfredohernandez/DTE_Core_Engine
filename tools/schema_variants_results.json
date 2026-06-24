@@ -1,0 +1,51 @@
+[
+  {
+    "variant_index": 1,
+    "variant": "http://www.sii.cl/SiiDte http://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd",
+    "file": "tools/variant_1.xml",
+    "sha1": "1a13a966e2279286c1930c40168f29024d789fcf",
+    "response": "<?xml version=\"1.0\"?>\n<RECEPCIONDTE>\n <RUTSENDER>9038113-K</RUTSENDER>\n <RUTCOMPANY>77710916-2</RUTCOMPANY>\n <FILE>boleta.xml</FILE>\n <TIMESTAMP>2026-06-18 18:03:55</TIMESTAMP>\n <STATUS>7</STATUS>\n\n  <DETAIL>\n<ERROR>SCH-00001: Invalid Schema Name</ERROR>\n</DETAIL>\n\n\n</RECEPCIONDTE>\n"
+  },
+  {
+    "variant_index": 2,
+    "variant": "http://www.sii.cl/SiiDte https://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd",
+    "file": "tools/variant_2.xml",
+    "sha1": "e59e351c947790f38b96f5e4a241222dadf9611e",
+    "response": "<?xml version=\"1.0\"?>\n<RECEPCIONDTE>\n <RUTSENDER>9038113-K</RUTSENDER>\n <RUTCOMPANY>77710916-2</RUTCOMPANY>\n <FILE>boleta.xml</FILE>\n <TIMESTAMP>2026-06-18 18:03:55</TIMESTAMP>\n <STATUS>7</STATUS>\n\n  <DETAIL>\n<ERROR>SCH-00001: Invalid Schema Name</ERROR>\n</DETAIL>\n\n\n</RECEPCIONDTE>\n"
+  },
+  {
+    "variant_index": 3,
+    "variant": "http://www.sii.cl/SiiDtehttp://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd",
+    "file": "tools/variant_3.xml",
+    "sha1": "f50c3aa0bd09f576d249d9df26739fc91f956751",
+    "response": "<?xml version=\"1.0\"?>\n<RECEPCIONDTE>\n <RUTSENDER>9038113-K</RUTSENDER>\n <RUTCOMPANY>77710916-2</RUTCOMPANY>\n <FILE>boleta.xml</FILE>\n <TIMESTAMP>2026-06-18 18:03:56</TIMESTAMP>\n <STATUS>7</STATUS>\n\n  <DETAIL>\n<ERROR>SCH-00001: Invalid Schema Name</ERROR>\n</DETAIL>\n\n\n</RECEPCIONDTE>\n"
+  },
+  {
+    "variant_index": 4,
+    "variant": "http://www.sii.cl/SiiDte\nhttp://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd",
+    "file": "tools/variant_4.xml",
+    "sha1": "46b59fb8cc292b3aff21323d67fda9fc8c5abb28",
+    "response": "<?xml version=\"1.0\"?>\n<RECEPCIONDTE>\n <RUTSENDER>9038113-K</RUTSENDER>\n <RUTCOMPANY>77710916-2</RUTCOMPANY>\n <FILE>boleta.xml</FILE>\n <TIMESTAMP>2026-06-18 18:03:56</TIMESTAMP>\n <STATUS>7</STATUS>\n\n  <DETAIL>\n<ERROR>SCH-00001: Invalid Schema Name</ERROR>\n</DETAIL>\n\n\n</RECEPCIONDTE>\n"
+  },
+  {
+    "variant_index": 5,
+    "variant": "http://www.sii.cl/SiiDte\r\nhttp://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd",
+    "file": "tools/variant_5.xml",
+    "sha1": "70b1eb2ed1cbe6e07f5ef90cdde130729341aa77",
+    "response": "<?xml version=\"1.0\"?>\n<RECEPCIONDTE>\n <RUTSENDER>9038113-K</RUTSENDER>\n <RUTCOMPANY>77710916-2</RUTCOMPANY>\n <FILE>boleta.xml</FILE>\n <TIMESTAMP>2026-06-18 18:03:56</TIMESTAMP>\n <STATUS>7</STATUS>\n\n  <DETAIL>\n<ERROR>SCH-00001: Invalid Schema Name</ERROR>\n</DETAIL>\n\n\n</RECEPCIONDTE>\n"
+  },
+  {
+    "variant_index": 6,
+    "variant": "http://www.sii.cl/SiiDte http://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd http://www.w3.org/2000/09/xmldsig# xmldsignature_v10.xsd",
+    "file": "tools/variant_6.xml",
+    "sha1": "dc8e0cb4ac8cab73b228a7ec77c188beda3ba97e",
+    "response": "<?xml version=\"1.0\"?>\n<RECEPCIONDTE>\n <RUTSENDER>9038113-K</RUTSENDER>\n <RUTCOMPANY>77710916-2</RUTCOMPANY>\n <FILE>boleta.xml</FILE>\n <TIMESTAMP>2026-06-18 18:03:56</TIMESTAMP>\n <STATUS>7</STATUS>\n\n  <DETAIL>\n<ERROR>SCH-00001: Invalid Schema Name</ERROR>\n</DETAIL>\n\n\n</RECEPCIONDTE>\n"
+  },
+  {
+    "variant_index": 7,
+    "variant": "http://www.sii.cl/SiiDte http://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd http://www.w3.org/2000/09/xmldsig# http://www.w3.org/2000/09/xmldsig#",
+    "file": "tools/variant_7.xml",
+    "sha1": "8040f3a4523fe424061650151390c8f174d9e1ea",
+    "response": "<?xml version=\"1.0\"?>\n<RECEPCIONDTE>\n <RUTSENDER>9038113-K</RUTSENDER>\n <RUTCOMPANY>77710916-2</RUTCOMPANY>\n <FILE>boleta.xml</FILE>\n <TIMESTAMP>2026-06-18 18:03:57</TIMESTAMP>\n <STATUS>7</STATUS>\n\n  <DETAIL>\n<ERROR>SCH-00001: Invalid Schema Name</ERROR>\n</DETAIL>\n\n\n</RECEPCIONDTE>\n"
+  }
+]

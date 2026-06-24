@@ -1,0 +1,2683 @@
+--- accepted_extracted.xml
++++ generated_envio_from_builder.xml
+@@ -1,2656 +1,40 @@
+-<DTE xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0">
++<?xml version='1.0' encoding='ISO-8859-1'?>
++<EnvioBOLETA xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0" xsi:schemaLocation="http://www.sii.cl/SiiDte http://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd">
++  <SetDTE ID="SetDoc">
+ 
+ 
+-
+-
+-      <Documento ID="T39F63843043">
+-
+-
++      <Caratula version="1.0"><RutEmisor>76123456-7</RutEmisor><RutEnvia>76123456-7</RutEnvia><RutReceptor>60803000-K</RutReceptor><FchResol>2024-04-02</FchResol><NroResol>0</NroResol><TmstFirmaEnv>2026-06-19T18:26:56</TmstFirmaEnv><SubTotDTE><TpoDTE>39</TpoDTE><NroDTE>1</NroDTE></SubTotDTE></Caratula><Documento ID="T39F170">
+ 
+ 
+         <Encabezado>
+-
+-
+-
+-
+           <IdDoc>
+-
+-
+-
+-
+             <TipoDTE>39</TipoDTE>
+-
+-
+-
+-
+-            <Folio>63843043</Folio>
+-
+-
+-
+-
+-            <FchEmis>2026-06-02</FchEmis>
+-
+-
+-
+-
++            <Folio>170</Folio>
++            <FchEmis>2026-06-18</FchEmis>
+             <IndServicio>2</IndServicio>
+-
+-
+-
+-
+-            <FchVenc>2026-06-19</FchVenc>
+-
+-
+-
+-
+-          </IdDoc>
+-
+-
+-
+-
+-          <Emisor>
+-
+-
+-
+-
+-            <RUTEmisor>96722460-K</RUTEmisor>
+-
+-
+-
+-
+-            <RznSocEmisor>METROGAS S.A.</RznSocEmisor>
+-
+-
+-
+-
+-            <GiroEmisor>DISTRIBUCION Y COMERCIALIZACION DE GAS, PETROLEO Y OTROS COMBUSTIBLES</GiroEmisor>
+-
+-
+-
+-
+-            <DirOrigen>EL REGIDOR 54</DirOrigen>
+-
+-
+-
+-
+-            <CmnaOrigen>LAS CONDES</CmnaOrigen>
+-
+-
+-
+-
+-            <CiudadOrigen>SANTIAGO</CiudadOrigen>
+-
+-
+-
+-
+-          </Emisor>
+-
+-
+-
+-
+-          <Receptor>
+-
+-
+-
+-
+-            <RUTRecep>9038113-K</RUTRecep>
+-
+-
+-
+-
+-            <CdgIntRecep>900726371</CdgIntRecep>
+-
+-
+-
+-
+-            <RznSocRecep>CARLOS HERNANDEZ</RznSocRecep>
+-
+-
+-
+-
+-            <DirRecep>AVENIDA SANTOS DUMONT 560-B TOR-B DEP-813</DirRecep>
+-
+-
+-
+-
+-            <CmnaRecep>RECOLETA</CmnaRecep>
+-
+-
+-
+-
+-            <CiudadRecep>SANTIAGO</CiudadRecep>
+-
+-
+-
+-
+-            <DirPostal>   </DirPostal>
+-
+-
+-
+-
+-            <CmnaPostal />
+-
+-
+-
+-
+-          </Receptor>
+-
+-
+-
+-
+-          <Totales>
+-
+-
+-
+-
+-            <MntNeto>42377</MntNeto>
+-
+-
+-
+-
+-            <IVA>8052</IVA>
+-
+-
+-
+-
+-            <MntTotal>50429</MntTotal>
+-
+-
+-
+-
+-            <VlrPagar>50429</VlrPagar>
+-
+-
+-
+-
+-          </Totales>
+-
+-
+-
+-
+-        </Encabezado>
+-
+-
+-
+-
+-        <Detalle>
+-
+-
+-
+-
+-          <NroLinDet>1</NroLinDet>
+-
+-
+-
+-
+-          <NmbItem>Interés</NmbItem>
+-
+-
+-
+-
+-          <MontoItem>276</MontoItem>
+-
+-
+-
+-
+-        </Detalle>
+-
+-
+-
+-
+-        <Detalle>
+-
+-
+-
+-
+-          <NroLinDet>2</NroLinDet>
+-
+-
+-
+-
+-          <NmbItem>Arriendo Medidor</NmbItem>
+-
+-
+-
+-
+-          <MontoItem>0</MontoItem>
+-
+-
+-
+-
+-        </Detalle>
+-
+-
+-
+-
+-        <Detalle>
+-
+-
+-
+-
+-          <NroLinDet>3</NroLinDet>
+-
+-
+-
+-
+-          <NmbItem>Administración del servicio (Cargo Fijo)</NmbItem>
+-
+-
+-
+-
+-          <MontoItem>0</MontoItem>
+-
+-
+-
+-
+-        </Detalle>
+-
+-
+-
+-
+-        <Detalle>
+-
+-
+-
+-
+-          <NroLinDet>4</NroLinDet>
+-
+-
+-
+-
+-          <NmbItem>Gas consumido</NmbItem>
+-
+-
+-
+-
+-          <MontoItem>50153</MontoItem>
+-
+-
+-
+-
+-        </Detalle>
+-
+-
+-
+-
+-        <TED version="1.0">
+-
+-
+-
+-
+-          <DD>
+-
+-
+-
+-
+-            <RE>96722460-K</RE>
+-
+-
+-
+-
+-            <TD>39</TD>
+-
+-
+-
+-
+-            <F>63843043</F>
+-
+-
+-
+-
+-            <FE>2026-06-02</FE>
+-
+-
+-
+-
+-            <RR>9038113-K</RR>
+-
+-
+-
+-
+-            <RSR>CARLOS HERNANDEZ</RSR>
+-
+-
+-
+-
+-            <MNT>50429</MNT>
+-
+-
+-
+-
+-            <IT1>Interés</IT1>
+-
+-
+-
+-
+-            <CAF version="1.0">
+-
+-
+-
+-
+-              <DA>
+-
+-
+-
+-
+-                <RE>96722460-K</RE>
+-
+-
+-
+-
+-                <RS>METROGAS S A</RS>
+-
+-
+-
+-
+-                <TD>39</TD>
+-
+-
+-
+-
+-                <RNG>
+-
+-
+-
+-
+-                  <D>63442201</D>
+-
+-
+-
+-
+-                  <H>65442200</H>
+-
+-
+-
+-
+-                </RNG>
+-
+-
+-
+-
+-                <FA>2026-05-08</FA>
+-
+-
+-
+-
+-                <RSAPK>
+-
+-
+-
+-
+-                  <M>qGrTTxvw3OGv50oYwAa3NF2ntlOWtqAwuvTqZ5NzxBKojngJ2iEdShoIXG9YinOjW8zQnXaHK6HThz59PtHQnQ==</M>
+-
+-
+-
+-
+-                  <E>Aw==</E>
+-
+-
+-
+-
+-                </RSAPK>
+-
+-
+-
+-
+-                <IDK>300</IDK>
+-
+-
+-
+-
+-              </DA>
+-
+-
+-
+-
+-              <FRMA algoritmo="SHA1withRSA">MZDIhQJXOCKPzeovH5exHod0vPCClYfeBiTxwSyn0/Wt0+dFTI7pin/TXSbxqsxut4LdT0TBTWuHKdYzzJ6Bhg==</FRMA>
+-
+-
+-
+-
+-            </CAF>
+-
+-
+-
+-
+-            <TSTED>2026-06-03T01:27:49</TSTED>
+-
+-
+-
+-
+-          </DD>
+-
+-
+-
+-
+-          <FRMT algoritmo="SHA1withRSA">pgSdySGDGdgooAHPA1Utu70y9/ZyaIIOrE2uRyLw7VsQSaJ4Io8lzqdszPpS2ERtY4KnC1BK+EBl
+-
+-
+-
+-
+-gh7Nvkb+mQ==</FRMT>
+-
+-
+-
+-
+-        </TED>
+-
+-
+-
+-
+-        <TmstFirma>2026-06-03T01:27:49</TmstFirma>
+-
+-
+-
+-
+-      </Documento>
+-
+-
++            </IdDoc><Emisor><RUTEmisor>77710916-2</RUTEmisor><RznSocEmisor>Tecnoalsa Chile SpA</RznSocEmisor><GiroEmisor>Servicios Tecnologicos</GiroEmisor><DirOrigen>Av. Providencia 1017 of.41</DirOrigen><CmnaOrigen>Providencia</CmnaOrigen></Emisor>
++          <Receptor><RUTRecep>999999-9</RUTRecep><RznSocRecep>nueves</RznSocRecep><CdgIntRecep></CdgIntRecep><DirPostal>   </DirPostal><CmnaPostal/></Receptor>
++          <Totales><MntNeto>0</MntNeto><IVA>0</IVA><MntTotal>100</MntTotal><VlrPagar>100</VlrPagar></Totales>
++          </Encabezado><Detalle><NroLinDet>1</NroLinDet><NmbItem>Servicio de ejemplo</NmbItem><QtyItem>1.0</QtyItem><PrcItem>100.0</PrcItem><MontoItem>100</MontoItem></Detalle><TED version="1.0"><DD><RE>77710916-2</RE><TD>39</TD><F>170</F><FE>2026-06-18</FE><RR>999999-9</RR><RSR>nueves</RSR><MNT>100</MNT><IT1>Servicio de ejemplo</IT1><CAF version="1.0">
++<DA>
++<RE>77710916-2</RE>
++<RS>TECNOALSA CHILE SPA</RS>
++<TD>39</TD>
++<RNG><D>168</D><H>172</H></RNG>
++<FA>2026-06-13</FA>
++<RSAPK><M>sdEV6qqIJ5c4sNAPqJxpv3XcMUR9C+6e5JNU4HlrE85tNH6DFC9HBR6+QZuPfEHnMOPcqk+FUK6HBqQQSpWHnw==</M><E>Aw==</E></RSAPK>
++<IDK>300</IDK>
++</DA>
++<FRMA algoritmo="SHA1withRSA">e6ZmUrP42aRUnXWF3EgjqVxroWmZE02SvaGf7Vr0pqaIRwba5ooxTaPo44YLjQ8IRzUqpZUEB6DqMh2hNTYbyw==</FRMA>
++</CAF>
++<TSTED>2026-06-18T15:37:10</TSTED></DD><FRMT algoritmo="SHA1withRSA">j5DceXea34XnxjQTuq7gPMOVg1aMlIqz3w7xYtIzn9Is/NGvYkCyWrKdhmClKw7SyCAZs2BMEw4gnP9w90d75Q==</FRMT></TED><TmstFirma>2026-06-18T15:37:10</TmstFirma></Documento>
+ 
+ 
+       <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+ 
+ 
++        <SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/><Reference URI="#T39F170"><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/><DigestValue>2vXjLcmJGfD4Gu61mslYEO4oPaA=</DigestValue></Reference></SignedInfo><SignatureValue>b9+C0QCc9UMK5apPhU1jkps88uUIbSGeZiVuBR8x0lM2aVBPuRM/mnED1FZt90pjsW/NZ1jcFYVuAti+7sAl0NGUuunQ426cRAfXllRVBTjMZzCjDcD5ZHNVEz9oPbUwAYetx+Uk8v00grEZHvIvUCbq+/lZ3LBRuuqgZfeVyOfeX0+bCs4YsEGdSR4/2k2RVWdskvsLmlnzRwVoI6DJgcxFX43QUXRQp9eLUZy9x4eoZ2MAHEOu+dk55HeKrjayV9fFPDw31MbiHJW/hUWJdM7Uh1MyeLTI2eRxgdcpsgzyxL0e968k4dxZ2qsQxBCKxSC2Mlu1/296c1lzv9ypvw==</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>sFo6Jey35X7wCrEa0kgV8xnWb1MQ7j6iqGUX43Q+Vcs8kwuW5i+f3jiO20vGOh8dzBVEaTiiqVDPiYx6UOr54G4ZGDskHx2NfIljluuhO7mWPz3JFcaMYxht+Sg2fM/nhd4YtU5BWVUpG/Asvm/XsN3QnQDnGl2TGjZ21AJbZ2xHZYlPMV8r37US+oCiMGwa8PhKf0iQ52PI13VDf2/nw3x8sTIf6bAS/ZWen4UIJheONENAZX5u6CBJ9JAlcg/8UO5H10ourP1HwetQyY35UbSOKA7V0foUUvvN9tdMNh+7iRMXkhgT0Ch4ssL5ZrmrrQeCsbOhioyArH8JA5KWvQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>MIIFOjCCBCKgAwIBAgIQAJRV0dSKVWo7qiqiUSHRoDANBgkqhkiG9w0BAQsFADBMMQswCQYDVQQGEwJVUzEUMBIGA1UECgwLZU11ZGhyYSBJbmMxJzAlBgNVBAMMHmVtU2lnbiBUcnVzdGVkIElzc3VpbmcgQ0EgLSBDNDAeFw0yNjAzMTcxNTUxMzJaFw0yNzAzMTcxNTUxMzJaMIHGMQswCQYDVQQGEwJDTDEpMCcGA1UECBMgUmVnaW9uIE1ldHJvcG9saXRhbmEgZGUgU2FudGlhZ28xETAPBgNVBAcTCHNhbnRpYWdvMSUwIwYDVQQKExxGUkFOQ0lTQ0EgSEVSTkFOREVaIElCQUNBQ0hFMSswKQYJKoZIhvcNAQkBDBxjYXJsb3NoZXJuYW5kZXo5NjNAZ21haWwuY29tMSUwIwYDVQQDDBxGUkFOQ0lTQ0EgSEVSTkFOREVaIElCQUNBQ0hFMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsFo6Jey35X7wCrEa0kgV8xnWb1MQ7j6iqGUX43Q+Vcs8kwuW5i+f3jiO20vGOh8dzBVEaTiiqVDPiYx6UOr54G4ZGDskHx2NfIljluuhO7mWPz3JFcaMYxht+Sg2fM/nhd4YtU5BWVUpG/Asvm/XsN3QnQDnGl2TGjZ21AJbZ2xHZYlPMV8r37US+oCiMGwa8PhKf0iQ52PI13VDf2/nw3x8sTIf6bAS/ZWen4UIJheONENAZX5u6CBJ9JAlcg/8UO5H10ourP1HwetQyY35UbSOKA7V0foUUvvN9tdMNh+7iRMXkhgT0Ch4ssL5ZrmrrQeCsbOhioyArH8JA5KWvQIDAQABo4IBmzCCAZcwHwYDVR0jBBgwFoAU0tSbGjTgvMpbuau2ys/tGnxRiVEwHQYDVR0OBBYEFMSSMTOk35QhXTWvYau6UjUrJyklMEUGA1UdIAQ+MDwwOgYLKwYBBAGDjiEBAAEwKzApBggrBgEFBQcCARYdaHR0cDovL3Jlc3Bvc2l0b3J5LmVtc2lnbi5jb20weQYIKwYBBQUHAQEEbTBrMCIGCCsGAQUFBzABhhZodHRwOi8vb2NzcC5lbXNpZ24uY29tMEUGCCsGAQUFBzAChjlodHRwOi8vcmVwb3NpdG9yeS5lbXNpZ24uY29tL2NlcnRzL3RydXN0ZWRpc3N1aW5nY2FjNC5jcnQwPQYDVR0fBDYwNDAyoDCgLoYsaHR0cDovL2NybC5lbXNpZ24uY29tP3RydXN0ZWRpc3N1aW5nY2FjNC5jcmwwIgYDVR0RBBswGaAXBggrBgEEAcEBAaALFgk5MDM4MTEzLUswIwYDVR0SBBwwGqAYBggrBgEEAcEBAqAMFgo3NzE1NjM3My0yMAsGA1UdDwQEAwIE8DANBgkqhkiG9w0BAQsFAAOCAQEAwEWNOpN2gf+Mr3PQKtSx2JjBdf0GH5x8UlITrwzrvNB6sGVCRS5RXD4Apn/pkLFwV+4VzBO6iQhgSdH7JmdYxaZq78PaeKqZIn2g6ohmnurrwPeBD+kXX9fTmrbvYbIVarAKRlL2gTbx1ebfRO8tEH9cOUpbZOLC0V8Lp0Q8qGUtNeYgTcmNUX6HiWfeuJcB/rZ5a62iFVYuNbzcmKGcCVR0QWDJYI7T8fsA8hZfxs4bPyHL0Yd7/rcN8U0c5khBAik2+9X1bNwAifOjUq40oAuBmwHCf6OS+dwPAE7nXRD5xT2YplsHMkVIi8L502CvRgGd3QRvXCvu0GzCbmVoew==</X509Certificate></X509Data></KeyInfo><Totales><MntNeto>0</MntNeto><IVA>0</IVA><MntTotal>0</MntTotal><VlrPagar>0</VlrPagar></Totales></Signature>
+ 
+ 
+-        <SignedInfo>
+-
+-
+-
+-
+-                <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+-
+-
+-
+-
+-                <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+-
+-
+-
+-
+-                <Reference URI="#T39F63843043">
+-
+-
+-
+-
+-                        <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+-
+-
+-
+-
+-                        <DigestValue>/wrxS3jXwWkCvpdIAp/BqvvmyPA=</DigestValue>
+-
+-
+-
+-
+-                </Reference>
+-
+-
+-
+-
+-        </SignedInfo>
+-
+-
+-
+-
+-        <SignatureValue>kczI44X9PxELAT6rneSLpNlX1XXGIsrf1g6EfjyJ97W9JfSZNK84RAcE5xaJ5ExNHL+gO+489m2j
+-
+-
+-
+-
+-i69/L8EqbFol8MLQFmvLjhuNC3KaxBsb+uiNtte8QmD+HVXEJrYtnMYe0quc+RcrqUZ2mZtIbTOm
+-
+-
+-
+-
+-osYHC3HQL+gVL+JY8XdG1N7mdmRfDfxBzqOPnjrAh4Mi9wTszjbO4Ea0znrtbv4gh6v7EBhh1N8k
+-
+-
+-
+-
+-m0x7Pex15BvRXUG8FZJ+OjafP4eNtlNuKmhLLpfr+Br/Vgj5EIA1Eh0osfakfPxDNyMcuRf0ESne
+-
+-
+-
+-
+-9axpzwr/JD3sPV2Z1xbG/8u54sadIH9d8j0HdA==</SignatureValue>
+-
+-
+-
+-
+-        <KeyInfo>
+-
+-
+-
+-
+-                <KeyValue>
+-
+-
+-
+-
+-                        <RSAKeyValue>
+-
+-
+-
+-
+-                                <Modulus>rb2kvwtUMhAwvSRGgn/XJgcKShyllu3uGGme2Zkf1DA8VWBSamEtLHHiUIrYMh0IW7CmBAQuJ6kH
+-
+-
+-
+-
+-THo8UQZgXZqiBLoZCRiEgBRrRAgdhlc7LJDT4XHRzQnrpAD0YrnWvYxdAxxb0vd2y69eR2DZfVsK
+-
+-
+-
+-
+-jIKZpkhyoFSQ3dNJDfijS9DnOQFJnaKKKn8howEm2R1WjU09173zkH6ZSMcnIrkH3xPjenXIW3l+
+-
+-
+-
+-
+-qGV0uBPNp6mU2/UYWjxI21RuYljjmfuKPGPx5cbSuuxX21MS21hMDNjUANCnG1r5AK2UvpncHp3k
+-
+-
+-
+-
+-YJRqSKJTHZqVNNICfar1wps2rYK6TDEh8FEpNw==</Modulus>
+-
+-
+-
+-
+-                                <Exponent>AQAB</Exponent>
+-
+-
+-
+-
+-                        </RSAKeyValue>
+-
+-
+-
+-
+-                </KeyValue>
+-
+-
+-
+-
+-                <X509Data>
+-
+-
+-
+-
+-                        <X509Certificate>MIIGxjCCBa6gAwIBAgIDBUL+MA0GCSqGSIb3DQEBCwUAMIGmMQswCQYDVQQGEwJDTDEYMBYGA1UE
+-
+-
+-
+-
+-ChMPQWNlcHRhLmNvbSBTLkEuMUgwRgYDVQQDEz9BY2VwdGEuY29tIEF1dG9yaWRhZCBDZXJ0aWZp
+-
+-
+-
+-
+-Y2Fkb3JhIENsYXNlIDMgUGVyc29uYSBOYXR1cmFsIC0gRzQxHjAcBgkqhkiG9w0BCQEWD2luZm9A
+-
+-
+-
+-
+-YWNlcHRhLmNvbTETMBEGA1UEBRMKOTY5MTkwNTAtODAeFw0yNTA2MDQxNTU4NTZaFw0yODA2MDQx
+-
+-
+-
+-
+-NTU4NTZaMIGGMQswCQYDVQQGEwJDTDEYMBYGA1UEDBMPUEVSU09OQSBOQVRVUkFMMSIwIAYDVQQD
+-
+-
+-
+-
+-ExlQQUJMQSBNQVJMRU4gTUFSSU4gVkFSR0FTMSQwIgYJKoZIhvcNAQkBFhVKWkFNT1JBTk9ATUVU
+-
+-
+-
+-
+-Uk9HQVMuQ0wxEzARBgNVBAUTCjE2NTE3MjY3LTEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+-
+-
+-
+-
+-AoIBAQCtvaS/C1QyEDC9JEaCf9cmBwpKHKWW7e4YaZ7ZmR/UMDxVYFJqYS0sceJQitgyHQhbsKYE
+-
+-
+-
+-
+-BC4nqQdMejxRBmBdmqIEuhkJGISAFGtECB2GVzsskNPhcdHNCeukAPRiuda9jF0DHFvS93bLr15H
+-
+-
+-
+-
+-YNl9WwqMgpmmSHKgVJDd00kN+KNL0Oc5AUmdoooqfyGjASbZHVaNTT3XvfOQfplIxyciuQffE+N6
+-
+-
+-
+-
+-dchbeX6oZXS4E82nqZTb9RhaPEjbVG5iWOOZ+4o8Y/HlxtK67FfbUxLbWEwM2NQA0KcbWvkArZS+
+-
+-
+-
+-
+-mdweneRglGpIolMdmpU00gJ9qvXCmzatgrpMMSHwUSk3AgMBAAGjggMZMIIDFTAJBgNVHRMEAjAA
+-
+-
+-
+-
+-MB8GA1UdIwQYMBaAFKr9vcXpN032mU1XjsFxGvnrwwbjMB0GA1UdDgQWBBTjWZ0nMs6e/ehP9LAJ
+-
+-
+-
+-
+-Kaido7blTDALBgNVHQ8EBAMCBPAwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMEMIH6BgNV
+-
+-
+-
+-
+-HSAEgfIwge8wgewGCCsGAQQBtWsCMIHfMDEGCCsGAQUFBwIBFiVodHRwczovL2FjZzQuYWNlcHRh
+-
+-
+-
+-
+-LmNvbS9DUFMtQWNlcHRhY29tMIGpBggrBgEFBQcCAjCBnDAWFg9BY2VwdGEuY29tIFMuQS4wAwIB
+-
+-
+-
+-
+-AhqBgUVsIHRpdHVsYXIgaGEgc2lkbyB2YWxpZGFkbyBlbiBmb3JtYSBwcmVzZW5jaWFsLCBxdWVk
+-
+-
+-
+-
+-YW5kbyBoYWJpbGl0YWRvIGVsIENlcnRpZmljYWRvIHBhcmEgdXNvIHRyaWJ1dGFyaW8sIHBhZ29z
+-
+-
+-
+-
+-LCBjb21lcmNpbyB5IG90cm9zLjBaBgNVHRIEUzBRoBgGCCsGAQQBwQECoAwWCjk2OTE5MDUwLTig
+-
+-
+-
+-
+-JAYIKwYBBQUHCAOgGDAWDAo5NjkxOTA1MC04BggrBgEEAcEBAoEPaW5mb0BhY2VwdGEuY29tMGAG
+-
+-
+-
+-
+-A1UdEQRZMFegGAYIKwYBBAHBAQGgDBYKMTY1MTcyNjctMaAkBggrBgEFBQcIA6AYMBYMCjE2NTE3
+-
+-
+-
+-
+-MjY3LTEGCCsGAQQBwQECgRVKWkFNT1JBTk9ATUVUUk9HQVMuQ0wwgZ8GCCsGAQUFBwEBBIGSMIGP
+-
+-
+-
+-
+-MFQGCCsGAQUFBzAChkhodHRwczovL2FjZzQuYWNlcHRhLmNvbS9kZXNjYXJnYXMvYWNlcHRhLmNv
+-
+-
+-
+-
+-bS5nNC5DbGFzZTNQZXJzb25hTmF0dXJhbC5jcnQwNwYIKwYBBQUHMAGGK2h0dHBzOi8vYWNnNC5h
+-
+-
+-
+-
+-Y2VwdGEuY29tL2FjZzQvb2NzcC9DbGFzZTMtRzQwPwYDVR0fBDgwNjA0oDKgMIYuaHR0cHM6Ly9h
+-
+-
+-
+-
+-Y2c0LmFjZXB0YS5jb20vYWNnNC9jcmwvQ2xhc2UzLUc0LmNybDANBgkqhkiG9w0BAQsFAAOCAQEA
+-
+-
+-
+-
+-eFH3oyTCOWYibKrW+3xziLHy87ZHiTXw7TW/iH7r7IZPCVHhBDac8Gc9iAgLhL/nKzj3gA557mP7
+-
+-
+-
+-
+-MWqYlHJ7QfVMXs0oRDBE4GOQV66DL6AmXH73YwHNWqy2yws4FlWHd5oOjbQ82Lb1rK5gkhDzWHNq
+-
+-
+-
+-
+-tmVleYL5osOfUB92n1XqKQigy5FDcbpQUE7bMFPMp5CaYISztp2wjtT9TGnZkWiCYGzcI5e8bPz1
+-
+-
+-
+-
+-o4Q5FvIgcXy0YjYNib58IEejD6XTxY+ctRRTgDyhbT+mQ3TcuBVf6LKjDoeS5QCtV0OVpQ4omYnf
+-
+-
+-
+-
+-5FvZvfvCjbjPYUrh6xOBLJY1i2ymunegodxTIA==</X509Certificate>
+-
+-
+-
+-
+-                </X509Data>
+-
+-
+-
+-
+-        </KeyInfo>
+-
+-
+-
+-
+-</Signature>
+-
+-
+-
+-
+-    </DTE><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Agencia_SII</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>SANTIAGO ORIENTE</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>NumRes_SII</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>80</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>FechRes_SII</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>22-08-2014</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Mail_Emisor</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>envio_dte@metrogas.cl</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Subject_Mail</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Boleta Electronica Folio 63843043 de METROGAS S.A.</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Num_Cliente</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>900726371</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Num_Interno</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>126666688560</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Num_Interno_DV</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>4</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Servicio</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>SERVICIO GAS GENERAL</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Producto</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>GAS NATURAL</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Glosa_PCS</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>P.C.S. nom 9.300 kcal/m3s</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Porcion_Rut</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>RC19-RC193050</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Cod_Barra</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>B900726371000050429126666688560400190626</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Ultimo_Pago</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Ultimo Pago Realizado $ 47.698 el 25.05.2026 ( BOTON DE PAGO SERVIPAG )</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin1</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Cargo por corte de suministro y reposición del servicio:$31.100- Corte</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin2</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>en empalme y reposición del servicio: $667.412-</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin3</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>La reposición del suministro de gas suspendido por deuda, se llevará a</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin4</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>cabo dentro de 24 hrs,solo en casos de pagos y convenios de pago</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin5</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>adeudados efectuados en nuestras Oficinas Comerciales.Pagos realizados</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin6</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>en otro lugar o por otro medio, el plazo de 24 hrs. para la reposición,</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin7</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>regirá desde que Metrogas reciba por parte del recaudador las sumas</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin8</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>adeudadas. Tarifas publicadas en www.metrogas.cl</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin10</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>El no pago oportuno de esta cuenta dará lugar al cobro de los intereses</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MCli_Lin11</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>y recargos adicionales que permite la ley.</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Monto_Palabras</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>CINCUENTA MIL CUATROCIENTOS VEINTINUEVE PESOS</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><CuponPago>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>Num_Cliente</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>900726371</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>Fcha_Venc</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>19.06.2026</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>Total_Pagar</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>$ 50.429</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>Glosa_pagar</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>Monto del periodo 28 Abril - 28 Mayo .</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-    </CuponPago><Consumo>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>Linea</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>1</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>NumSerie</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>GE0000390142008</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>Propiedad</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>METROGAS</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>Tarifa</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>BCR01</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>LectActFecha</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>20260528</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>LActFecha</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>28.05.2026</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>LActLect</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>5.915</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>LAntFecha</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>27.04.2026</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>LAntLect</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>5.887</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>ConsumoLeido</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>28</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>FcPyT</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>0,973223</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>FcPCal</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>1,070200</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>ConEquiv</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>29,16</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-      <DatosAdjuntos>
+-
+-
+-
+-
+-        <NombreDA>Fact_Correc</NombreDA>
+-
+-
+-
+-
+-        <ValorDA>1,041543</ValorDA>
+-
+-
+-
+-
+-      </DatosAdjuntos>
+-
+-
+-
+-
+-    </Consumo><Det_Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo>Servicio de Gas</Titulo>
+-
+-
+-
+-
+-        <Detalle />
+-
+-
+-
+-
+-        <Monto />
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo />
+-
+-
+-
+-
+-        <Detalle>Gas consumido ( 29,16 m3s )</Detalle>
+-
+-
+-
+-
+-        <Monto>50153</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo />
+-
+-
+-
+-
+-        <Detalle>Administración del servicio (Cargo Fijo)</Detalle>
+-
+-
+-
+-
+-        <Monto>0</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo />
+-
+-
+-
+-
+-        <Detalle>Arriendo Medidor</Detalle>
+-
+-
+-
+-
+-        <Monto>0</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo>Otros cargos afectos a IVA</Titulo>
+-
+-
+-
+-
+-        <Detalle />
+-
+-
+-
+-
+-        <Monto />
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo />
+-
+-
+-
+-
+-        <Detalle>Interés</Detalle>
+-
+-
+-
+-
+-        <Monto>276</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo>MONTO AFECTO</Titulo>
+-
+-
+-
+-
+-        <Detalle />
+-
+-
+-
+-
+-        <Monto>50429</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo>MONTO EXENTO</Titulo>
+-
+-
+-
+-
+-        <Detalle />
+-
+-
+-
+-
+-        <Monto>0</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo>TOTAL BOLETA</Titulo>
+-
+-
+-
+-
+-        <Detalle />
+-
+-
+-
+-
+-        <Monto>50429</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo>IVA</Titulo>
+-
+-
+-
+-
+-        <Detalle>El IVA de esta Boleta es</Detalle>
+-
+-
+-
+-
+-        <Monto>8052</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo>TOTAL A PAGAR</Titulo>
+-
+-
+-
+-
+-        <Detalle />
+-
+-
+-
+-
+-        <Monto>50429</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo>TOTAL NETO</Titulo>
+-
+-
+-
+-
+-        <Detalle />
+-
+-
+-
+-
+-        <Monto />
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-      <Cuenta>
+-
+-
+-
+-
+-        <Titulo />
+-
+-
+-
+-
+-        <Detalle>TOTAL NETO</Detalle>
+-
+-
+-
+-
+-        <Monto>42377</Monto>
+-
+-
+-
+-
+-      </Cuenta>
+-
+-
+-
+-
+-    </Det_Cuenta><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Total_Consumo</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>29,16</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Glosa_consumo</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Consumo Total ( 31 Días Calculados ) =</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Tipo_tarifa</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Tipo de tarifa contratada :</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Dir_Suministro</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>AVENIDA SANTOS DUMONT 560-B TOR-B DEP-813 RECOLETA SANTIAGO</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Per_Consumo</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>28.04.2026 AL 28.05.2026</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Dias_Calculo</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>31</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Prox_Lectura</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>25.06.2026</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Glosa_estimada</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Fecha Estimada prox.Lectura :</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Fecha_estimada</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>25.06.2026</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Per_Consumo3</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>a</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>MedidorActual</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>GE0000390142008</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Formato</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>39_01.jasper</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>TITGRAFICO</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>CONSUMO ÚLTIMOS 13 MESES (m3s)</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><ColoresGrafico /><HistoricoConsumo>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>29</Dia>
+-
+-
+-
+-
+-        <Mes>MAY</Mes>
+-
+-
+-
+-
+-        <Ano>25</Ano>
+-
+-
+-
+-
+-        <Consumo>22,49</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>27</Dia>
+-
+-
+-
+-
+-        <Mes>JUN</Mes>
+-
+-
+-
+-
+-        <Ano>25</Ano>
+-
+-
+-
+-
+-        <Consumo>22,77</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>28</Dia>
+-
+-
+-
+-
+-        <Mes>JUL</Mes>
+-
+-
+-
+-
+-        <Ano>25</Ano>
+-
+-
+-
+-
+-        <Consumo>29,74</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>27</Dia>
+-
+-
+-
+-
+-        <Mes>AGO</Mes>
+-
+-
+-
+-
+-        <Ano>25</Ano>
+-
+-
+-
+-
+-        <Consumo>26,79</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>29</Dia>
+-
+-
+-
+-
+-        <Mes>SEP</Mes>
+-
+-
+-
+-
+-        <Ano>25</Ano>
+-
+-
+-
+-
+-        <Consumo>28,64</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>27</Dia>
+-
+-
+-
+-
+-        <Mes>OCT</Mes>
+-
+-
+-
+-
+-        <Ano>25</Ano>
+-
+-
+-
+-
+-        <Consumo>17,99</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>27</Dia>
+-
+-
+-
+-
+-        <Mes>NOV</Mes>
+-
+-
+-
+-
+-        <Ano>25</Ano>
+-
+-
+-
+-
+-        <Consumo>21,96</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>29</Dia>
+-
+-
+-
+-
+-        <Mes>DIC</Mes>
+-
+-
+-
+-
+-        <Ano>25</Ano>
+-
+-
+-
+-
+-        <Consumo>21,73</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>27</Dia>
+-
+-
+-
+-
+-        <Mes>ENE</Mes>
+-
+-
+-
+-
+-        <Ano>26</Ano>
+-
+-
+-
+-
+-        <Consumo>23,98</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>26</Dia>
+-
+-
+-
+-
+-        <Mes>FEB</Mes>
+-
+-
+-
+-
+-        <Ano>26</Ano>
+-
+-
+-
+-
+-        <Consumo>15,16</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>26</Dia>
+-
+-
+-
+-
+-        <Mes>MAR</Mes>
+-
+-
+-
+-
+-        <Ano>26</Ano>
+-
+-
+-
+-
+-        <Consumo>16,26</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>27</Dia>
+-
+-
+-
+-
+-        <Mes>ABR</Mes>
+-
+-
+-
+-
+-        <Ano>26</Ano>
+-
+-
+-
+-
+-        <Consumo>27,61</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-      <HistCons>
+-
+-
+-
+-
+-        <Dia>28</Dia>
+-
+-
+-
+-
+-        <Mes>MAY</Mes>
+-
+-
+-
+-
+-        <Ano>26</Ano>
+-
+-
+-
+-
+-        <Consumo>29,16</Consumo>
+-
+-
+-
+-
+-      </HistCons>
+-
+-
+-
+-
+-    </HistoricoConsumo><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Cons_Mesaa</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>29,66%</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Cons_Glos_Mesaa</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Este mes consumiste aproximadamente un 29,66% más de gas que el mismo período del año pasado</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Cons_Mesan</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>5,61%</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>Cons_Glos_Mesan</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Este mes consumiste aproximadamente un 5,61% más de gas que el período pasado</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>SUSCRITO_ELECTRONICO</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Suscrito a Envio Electronico</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>CONCEPTO_01</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Factor de Estandarización</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>DESCRIPCION_01</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Valor numérico aplicado a los metros cúbicos (m3) registrados por el medidor para determinar el gas efectivamente consumido, ya que dicha medición, no considera las condiciones particulares de presión, temperatura y poder calorífico del gas.</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>CONCEPTO_02</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Gas Consumido</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>DESCRIPCION_02</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Cantidad de metro cúbicos estandarizados (m3S) que resulta luego de aplicarse el factor de estandarización al consumo registrado por el medidor (energía consumida).</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>COD_BARRA_REPARTO</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>126666688560RC193050CANN</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>OBS_REPARTO</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Observaciones de Reparto:</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>OBS_REPARTO</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>Sin Observaciones</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>IMAGEN1</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>IM_GRL_RES_2</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><DatosAdjuntos>
+-
+-
+-
+-
+-      <NombreDA>IMAGEN2</NombreDA>
+-
+-
+-
+-
+-      <ValorDA>IMG_EE_01</ValorDA>
+-
+-
+-
+-
+-    </DatosAdjuntos><CartolaCF /><ClubMetro>
+-
+-
+-
+-
+-      <Info>Puntos Acumulados Período|116</Info>
+-
+-
+-
+-
+-      <Info>Puntos por Vencer prox 3 meses|296</Info>
+-
+-
+-
+-
+-      <Info>_____|Metropuntos al final del Período</Info>
+-
+-
+-
+-
+-      <Info>Metropuntos al final del Período|2160</Info>
+-
+-
+-
+-
+-      <Info>Saldos al:|02.06.2026</Info>
+-
+-
+-
+-
+-    </ClubMetro><Cliente_ClubMetro>Nombre: CARLOS HERNANDEZ IBACACHE</Cliente_ClubMetro>+      </SetDTE>
++</EnvioBOLETA>

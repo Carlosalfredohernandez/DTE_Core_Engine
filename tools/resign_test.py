@@ -58,6 +58,20 @@ async def resign_and_verify(dte_id: int):
 
         root = etree.fromstring(xml.encode('latin-1'))
 
+        # Forzar xsi:schemaLocation exacto en la raíz EnvioBOLETA (evita variantes mal formadas)
+        try:
+            xsi_ns = 'http://www.w3.org/2001/XMLSchema-instance'
+            sii_ns = 'http://www.sii.cl/SiiDte'
+            desired = f"{sii_ns} http://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd"
+            # root puede ser EnvioBOLETA o contenerlo como hijo
+            if (etree.QName(root).localname == 'EnvioBOLETA'):
+                root.set(f'{{{xsi_ns}}}schemaLocation', desired)
+            else:
+                for envio in root.findall('.//{http://www.sii.cl/SiiDte}EnvioBOLETA') or root.findall('.//EnvioBOLETA'):
+                    envio.set(f'{{{xsi_ns}}}schemaLocation', desired)
+        except Exception:
+            pass
+
         # localizar elemento a firmar (el Documento dentro del EnvioBOLETA)
         # asumimos el ID del documento (por ejemplo T39F368)
         # buscaremos la primera firma existente para tomar su Reference URI

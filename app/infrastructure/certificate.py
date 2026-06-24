@@ -8,6 +8,7 @@ Provee la clave privada y certificado para firma de semilla y XMLDSIG.
 from __future__ import annotations
 
 import datetime
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -164,11 +165,15 @@ def load_pfx_from_settings() -> CertificateData:
     """
     from app.config import get_settings
     settings = get_settings()
+    # Preferir la variable de entorno `CERT_MASTER_KEY` (Railway secret)
+    # antes que el valor cargado en settings. Esto permite que la clave
+    # maestra no esté codificada en archivos de configuración.
+    master_key = os.environ.get("CERT_MASTER_KEY") or settings.cert_master_key
     return _load_pfx_from_source(
         base64_value=settings.cert_pfx_base64,
         path_value=settings.cert_pfx_path,
         password_value=settings.cert_pfx_password,
-        master_key=settings.cert_master_key,
+        master_key=master_key,
     )
 
 
@@ -177,11 +182,12 @@ def load_pfx_from_empresa(empresa) -> CertificateData:
     from app.config import get_settings
 
     settings = get_settings()
+    master_key = os.environ.get("CERT_MASTER_KEY") or settings.cert_master_key
     return _load_pfx_from_source(
         base64_value=getattr(empresa, "cert_pfx_base64", None) or settings.cert_pfx_base64,
         path_value=getattr(empresa, "cert_pfx_path", None) or settings.cert_pfx_path,
         password_value=getattr(empresa, "cert_pfx_password", None) or settings.cert_pfx_password,
-        master_key=settings.cert_master_key,
+        master_key=master_key,
     )
 def load_pfx_from_file(pfx_path: str, password: str) -> CertificateData:
     """

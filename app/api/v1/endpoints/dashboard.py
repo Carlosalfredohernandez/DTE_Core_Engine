@@ -1137,6 +1137,7 @@ async def dashboard() -> HTMLResponse:
         <div class="actions card-body" style="margin-top:12px;">
           <button class="btn" data-op="boleta-generar">Generar boleta</button>
           <button class="btn secondary" data-op="boleta-enviar">Enviar boleta</button>
+          <button class="btn secondary" id="btnRebuildSend">Reconstruir y enviar (template)</button>
         </div>
         <div style="height:12px" class="card-body"></div>
         <div class="row-3 card-body">
@@ -1150,6 +1151,14 @@ async def dashboard() -> HTMLResponse:
           <button class="btn secondary" data-op="boleta-log">Ver log</button>
           <button class="btn secondary" data-op="boleta-firma">Diagnóstico firma</button>
         </div>
+        <div style="height:12px" class="card-body"></div>
+        <div class="row card-body">
+          <input class="input" id="rebuildFolio" placeholder="Folio (opcional para reconstruir)" />
+          <label style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="rebuildSendFlag" /> Enviar al SII
+          </label>
+        </div>
+        <div class="result" id="result-rebuild"></div>
         <div class="result" id="result-boleta"></div>
       </section>
 
@@ -2198,6 +2207,23 @@ async def dashboard() -> HTMLResponse:
             data = await fetchJson(`/api/v1/tracking/${encodeURIComponent($('trackingDteId').value)}/estado`);
             refreshHistory = true;
             break;
+          case 'dte-rebuild-send': {
+            // Reconstruir y opcionalmente enviar usando plantilla accepted_extracted.xml
+            const dteId = Number($('boletaIdEnviar').value || 0);
+            if (!dteId) throw { status: 0, data: 'Ingresa un ID DTE válido en "ID DTE para enviar".' };
+            const folioInput = $('rebuildFolio').value.trim();
+            const folioVal = folioInput ? Number(folioInput) : undefined;
+            const sendFlag = !!$('rebuildSendFlag').checked;
+            const payload = { dte_id: dteId, send: sendFlag };
+            if (sendFlag) {
+              // Confirmación adicional: requiere escribir EXACTAMENTE 'CONFIRMAR'
+              const confirmVal = prompt('Enviar al SII es irreversible. Escribe CONFIRMAR para proceder.');
+              if (confirmVal !== 'CONFIRMAR') throw { status: 0, data: 'Envio cancelado por el usuario (no se escribió CONFIRMAR).' };
+            }
+            if (folioVal && Number.isInteger(folioVal)) payload.folio = folioVal;
+            data = await fetchJson('/api/v1/dte/send', { method: 'POST', json: payload });
+            break;
+          }
           case 'history-load':
             data = await fetchJson(`/api/v1/dashboard/dtes?${historyQueryParams()}`);
             renderHistoryTable(data);
@@ -2298,6 +2324,8 @@ async def dashboard() -> HTMLResponse:
       setResult('result-flow', message, false);
       showToast('Empresa pendiente', message, 'error');
     });
+    // Reconstruir y enviar desde template
+    $('btnRebuildSend').addEventListener('click', () => run('dte-rebuild-send'));
     wireSidebar();
     syncUi();
     updateLegacyCertVisibility();

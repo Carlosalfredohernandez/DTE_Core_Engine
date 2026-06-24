@@ -40,6 +40,7 @@ class XmlSignerService:
       reference_uri: str | None = None,
       exclusive: bool | None = None,
       empresa: object | None = None,
+      si_c14n_doc_context: bool = False,
     ) -> str:
         """
         Firma un documento XML (Boleta, EnvioBOLETA) con XMLDSIG.
@@ -74,7 +75,17 @@ class XmlSignerService:
             else:
               exclusive = bool(getattr(settings, "use_exclusive_c14n", False))
 
-          root = etree.fromstring(xml_content.encode("latin-1"))
+          # Normalizar entrada: eliminar declaración XML con encoding
+          # para evitar conflictos (p.ej. '<?xml ... encoding="ISO-8859-1"?>').
+          # También asegurar que tengamos una cadena de texto.
+          if isinstance(xml_content, bytes):
+            xml_content = xml_content.decode('utf-8', errors='replace')
+          # quitar declaración XML inicial si existe
+          import re
+          xml_content = re.sub(r"^\s*<\?xml[^>]*\?>\s*", "", xml_content)
+          # parse usando UTF-8 explícito
+          parser = etree.XMLParser(recover=True, encoding='utf-8')
+          root = etree.fromstring(xml_content.encode('utf-8'), parser=parser)
 
           # 1. Localizar el elemento a firmar por su ID
           if reference_uri:
@@ -173,7 +184,19 @@ class XmlSignerService:
             elem_to_sign.tail = "\n"
           root.append(sig_tree)
           si_elem = sig_tree.find(f"{{{DS_NS}}}SignedInfo")
-          si_c14n = etree.tostring(si_elem, method="c14n", exclusive=exclusive)
+          # By default canonicalize SignedInfo element directly. Optionally
+          # canonicalize SignedInfo in the context of the full document to
+          # preserve namespace/prefixes exactly as they appear when the
+          # Signature node is placed within the root — this can affect how
+          # external verifiers reconstruct SignedInfo for verification.
+          if si_c14n_doc_context:
+              root_copy = etree.fromstring(etree.tostring(root))
+              si_copy = root_copy.find(f".//{{{DS_NS}}}SignedInfo")
+              if si_copy is None:
+                raise XmlSignError("SignedInfo not found in document context copy")
+              si_c14n = etree.tostring(si_copy, method="c14n", exclusive=exclusive)
+          else:
+              si_c14n = etree.tostring(si_elem, method="c14n", exclusive=exclusive)
           sig_bytes = private_key.sign(si_c14n, asym_padding.PKCS1v15(), hashes.SHA1())
           sig_b64 = base64.b64encode(sig_bytes).decode()
 
@@ -183,8 +206,8 @@ class XmlSignerService:
           # Serialización final en C14N (como texto canonizado) para mantener
           # estabilidad byte-a-byte respecto a la variante que ya fue aceptada
           # por el SII en este proyecto.
-          c14n_content = etree.tostring(root, method="c14n", exclusive=exclusive).decode("latin-1")
-          return '<?xml version="1.0" encoding="ISO-8859-1"?>\n' + c14n_content
+          c14n_content = etree.tostring(root, method="c14n", exclusive=exclusive).decode("utf-8")
+          return '<?xml version="1.0" encoding="UTF-8"?>\n' + c14n_content
 
         except XmlSignError:
             raise
@@ -227,7 +250,13 @@ class XmlSignerService:
           else:
             exclusive = bool(getattr(settings, "use_exclusive_c14n", False))
 
-        root = etree.fromstring(xml_content.encode("latin-1"))
+        # Normalizar igual que en sign_document: eliminar declaración XML
+        if isinstance(xml_content, bytes):
+          xml_content = xml_content.decode('utf-8', errors='replace')
+        import re
+        xml_content = re.sub(r"^\s*<\?xml[^>]*\?>\s*", "", xml_content)
+        parser = etree.XMLParser(recover=True, encoding='utf-8')
+        root = etree.fromstring(xml_content.encode('utf-8'), parser=parser)
         results: list[dict] = []
 
         for sig in root.iter(f"{{{DS_NS}}}Signature"):
@@ -299,7 +328,7 @@ class XmlSignerService:
 
                 si_elem = sig.find(f"{{{DS_NS}}}SignedInfo")
                 si_c14n = etree.tostring(si_elem, method="c14n", exclusive=exclusive)
-                result["si_c14n_hex"] = si_c14n[:200].decode("latin-1")
+                result["si_c14n_hex"] = si_c14n[:200].decode("utf-8")
 
                 try:
                     pub_key.verify(sig_bytes_val, si_c14n, asym_padding.PKCS1v15(), hashes.SHA1())

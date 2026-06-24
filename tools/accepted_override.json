@@ -1,0 +1,26 @@
+{
+  "emisor": {
+    "RUTEmisor": "96722460-K",
+    "RznSocEmisor": "METROGAS S.A.",
+    "GiroEmisor": "DISTRIBUCION Y COMERCIALIZACION DE GAS, PETROLEO Y OTROS COMBUSTIBLES",
+    "DirOrigen": "EL REGIDOR 54",
+    "CmnaOrigen": "LAS CONDES",
+    "CiudadOrigen": "SANTIAGO"
+  },
+  "receptor": {
+    "RUTRecep": "9038113-K",
+    "CdgIntRecep": "900726371",
+    "RznSocRecep": "CARLOS HERNANDEZ",
+    "DirRecep": "AVENIDA SANTOS DUMONT 560-B TOR-B DEP-813",
+    "CmnaRecep": "RECOLETA",
+    "CiudadRecep": "SANTIAGO",
+    "DirPostal": "",
+    "CmnaPostal": ""
+  },
+  "totales": {
+    "MntNeto": "42377",
+    "IVA": "8052",
+    "MntTotal": "50429",
+    "VlrPagar": "50429"
+  }
+}

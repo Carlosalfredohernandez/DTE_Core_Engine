@@ -1,0 +1,1984 @@
+
+<DTE xmlns="http://www.sii.cl/SiiDte" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0">
+
+
+
+
+      <Documento ID="T39F170"><Encabezado><IdDoc><TipoDTE>39</TipoDTE><Folio>170</Folio><FchEmis>2026-06-18</FchEmis><IndServicio>3</IndServicio></IdDoc><Emisor><RUTEmisor>77710916-2</RUTEmisor><RznSocEmisor>Tecnoalsa Chile SpA</RznSocEmisor><GiroEmisor>Servicios Tecnologicos</GiroEmisor><DirOrigen>Av. Providencia 1017 of.41</DirOrigen><CmnaOrigen>Providencia</CmnaOrigen></Emisor><Receptor><RUTRecep>999999-9</RUTRecep><RznSocRecep>nueves</RznSocRecep></Receptor><Totales><MntTotal>100</MntTotal></Totales></Encabezado><Detalle><NroLinDet>1</NroLinDet><NmbItem>Servicio de ejemplo</NmbItem><QtyItem>1.0</QtyItem><PrcItem>100.0</PrcItem><MontoItem>100</MontoItem></Detalle><TED version="1.0"><DD><RE>77710916-2</RE><TD>39</TD><F>170</F><FE>2026-06-18</FE><RR>999999-9</RR><RSR>nueves</RSR><MNT>100</MNT><IT1>Servicio de ejemplo</IT1><CAF version="1.0">
+<DA>
+<RE>77710916-2</RE>
+<RS>TECNOALSA CHILE SPA</RS>
+<TD>39</TD>
+<RNG><D>168</D><H>172</H></RNG>
+<FA>2026-06-13</FA>
+<RSAPK><M>sdEV6qqIJ5c4sNAPqJxpv3XcMUR9C+6e5JNU4HlrE85tNH6DFC9HBR6+QZuPfEHnMOPcqk+FUK6HBqQQSpWHnw==</M><E>Aw==</E></RSAPK>
+<IDK>300</IDK>
+</DA>
+<FRMA algoritmo="SHA1withRSA">e6ZmUrP42aRUnXWF3EgjqVxroWmZE02SvaGf7Vr0pqaIRwba5ooxTaPo44YLjQ8IRzUqpZUEB6DqMh2hNTYbyw==</FRMA>
+</CAF>
+<TSTED>2026-06-18T15:37:10</TSTED></DD><FRMT algoritmo="SHA1withRSA">j5DceXea34XnxjQTuq7gPMOVg1aMlIqz3w7xYtIzn9Is/NGvYkCyWrKdhmClKw7SyCAZs2BMEw4gnP9w90d75Q==</FRMT></TED><TmstFirma>2026-06-18T15:37:10</TmstFirma></Documento></DTE>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Agencia_SII</NombreDA>
+
+
+
+
+      <ValorDA>SANTIAGO ORIENTE</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>NumRes_SII</NombreDA>
+
+
+
+
+      <ValorDA>80</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>FechRes_SII</NombreDA>
+
+
+
+
+      <ValorDA>22-08-2014</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Mail_Emisor</NombreDA>
+
+
+
+
+      <ValorDA>envio_dte@metrogas.cl</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Subject_Mail</NombreDA>
+
+
+
+
+      <ValorDA>Boleta Electronica Folio 63843043 de METROGAS S.A.</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Num_Cliente</NombreDA>
+
+
+
+
+      <ValorDA>900726371</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Num_Interno</NombreDA>
+
+
+
+
+      <ValorDA>126666688560</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Num_Interno_DV</NombreDA>
+
+
+
+
+      <ValorDA>4</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Servicio</NombreDA>
+
+
+
+
+      <ValorDA>SERVICIO GAS GENERAL</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Producto</NombreDA>
+
+
+
+
+      <ValorDA>GAS NATURAL</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Glosa_PCS</NombreDA>
+
+
+
+
+      <ValorDA>P.C.S. nom 9.300 kcal/m3s</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Porcion_Rut</NombreDA>
+
+
+
+
+      <ValorDA>RC19-RC193050</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Cod_Barra</NombreDA>
+
+
+
+
+      <ValorDA>B900726371000050429126666688560400190626</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Ultimo_Pago</NombreDA>
+
+
+
+
+      <ValorDA>Ultimo Pago Realizado $ 47.698 el 25.05.2026 ( BOTON DE PAGO SERVIPAG )</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin1</NombreDA>
+
+
+
+
+      <ValorDA>Cargo por corte de suministro y reposición del servicio:$31.100- Corte</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin2</NombreDA>
+
+
+
+
+      <ValorDA>en empalme y reposición del servicio: $667.412-</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin3</NombreDA>
+
+
+
+
+      <ValorDA>La reposición del suministro de gas suspendido por deuda, se llevará a</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin4</NombreDA>
+
+
+
+
+      <ValorDA>cabo dentro de 24 hrs,solo en casos de pagos y convenios de pago</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin5</NombreDA>
+
+
+
+
+      <ValorDA>adeudados efectuados en nuestras Oficinas Comerciales.Pagos realizados</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin6</NombreDA>
+
+
+
+
+      <ValorDA>en otro lugar o por otro medio, el plazo de 24 hrs. para la reposición,</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin7</NombreDA>
+
+
+
+
+      <ValorDA>regirá desde que Metrogas reciba por parte del recaudador las sumas</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin8</NombreDA>
+
+
+
+
+      <ValorDA>adeudadas. Tarifas publicadas en www.metrogas.cl</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin10</NombreDA>
+
+
+
+
+      <ValorDA>El no pago oportuno de esta cuenta dará lugar al cobro de los intereses</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MCli_Lin11</NombreDA>
+
+
+
+
+      <ValorDA>y recargos adicionales que permite la ley.</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Monto_Palabras</NombreDA>
+
+
+
+
+      <ValorDA>CINCUENTA MIL CUATROCIENTOS VEINTINUEVE PESOS</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<CuponPago>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>Num_Cliente</NombreDA>
+
+
+
+
+        <ValorDA>900726371</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>Fcha_Venc</NombreDA>
+
+
+
+
+        <ValorDA>19.06.2026</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>Total_Pagar</NombreDA>
+
+
+
+
+        <ValorDA>$ 50.429</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>Glosa_pagar</NombreDA>
+
+
+
+
+        <ValorDA>Monto del periodo 28 Abril - 28 Mayo .</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+    </CuponPago>
+<Consumo>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>Linea</NombreDA>
+
+
+
+
+        <ValorDA>1</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>NumSerie</NombreDA>
+
+
+
+
+        <ValorDA>GE0000390142008</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>Propiedad</NombreDA>
+
+
+
+
+        <ValorDA>METROGAS</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>Tarifa</NombreDA>
+
+
+
+
+        <ValorDA>BCR01</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>LectActFecha</NombreDA>
+
+
+
+
+        <ValorDA>20260528</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>LActFecha</NombreDA>
+
+
+
+
+        <ValorDA>28.05.2026</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>LActLect</NombreDA>
+
+
+
+
+        <ValorDA>5.915</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>LAntFecha</NombreDA>
+
+
+
+
+        <ValorDA>27.04.2026</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>LAntLect</NombreDA>
+
+
+
+
+        <ValorDA>5.887</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>ConsumoLeido</NombreDA>
+
+
+
+
+        <ValorDA>28</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>FcPyT</NombreDA>
+
+
+
+
+        <ValorDA>0,973223</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>FcPCal</NombreDA>
+
+
+
+
+        <ValorDA>1,070200</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>ConEquiv</NombreDA>
+
+
+
+
+        <ValorDA>29,16</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+      <DatosAdjuntos>
+
+
+
+
+        <NombreDA>Fact_Correc</NombreDA>
+
+
+
+
+        <ValorDA>1,041543</ValorDA>
+
+
+
+
+      </DatosAdjuntos>
+
+
+
+
+    </Consumo>
+<Det_Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo>Servicio de Gas</Titulo>
+
+
+
+
+        <Detalle/>
+
+
+
+
+        <Monto/>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo/>
+
+
+
+
+        <Detalle>Gas consumido ( 29,16 m3s )</Detalle>
+
+
+
+
+        <Monto>50153</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo/>
+
+
+
+
+        <Detalle>Administración del servicio (Cargo Fijo)</Detalle>
+
+
+
+
+        <Monto>0</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo/>
+
+
+
+
+        <Detalle>Arriendo Medidor</Detalle>
+
+
+
+
+        <Monto>0</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo>Otros cargos afectos a IVA</Titulo>
+
+
+
+
+        <Detalle/>
+
+
+
+
+        <Monto/>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo/>
+
+
+
+
+        <Detalle>Interés</Detalle>
+
+
+
+
+        <Monto>276</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo>MONTO AFECTO</Titulo>
+
+
+
+
+        <Detalle/>
+
+
+
+
+        <Monto>50429</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo>MONTO EXENTO</Titulo>
+
+
+
+
+        <Detalle/>
+
+
+
+
+        <Monto>0</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo>TOTAL BOLETA</Titulo>
+
+
+
+
+        <Detalle/>
+
+
+
+
+        <Monto>50429</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo>IVA</Titulo>
+
+
+
+
+        <Detalle>El IVA de esta Boleta es</Detalle>
+
+
+
+
+        <Monto>8052</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo>TOTAL A PAGAR</Titulo>
+
+
+
+
+        <Detalle/>
+
+
+
+
+        <Monto>50429</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo>TOTAL NETO</Titulo>
+
+
+
+
+        <Detalle/>
+
+
+
+
+        <Monto/>
+
+
+
+
+      </Cuenta>
+
+
+
+
+      <Cuenta>
+
+
+
+
+        <Titulo/>
+
+
+
+
+        <Detalle>TOTAL NETO</Detalle>
+
+
+
+
+        <Monto>42377</Monto>
+
+
+
+
+      </Cuenta>
+
+
+
+
+    </Det_Cuenta>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Total_Consumo</NombreDA>
+
+
+
+
+      <ValorDA>29,16</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Glosa_consumo</NombreDA>
+
+
+
+
+      <ValorDA>Consumo Total ( 31 Días Calculados ) =</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Tipo_tarifa</NombreDA>
+
+
+
+
+      <ValorDA>Tipo de tarifa contratada :</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Dir_Suministro</NombreDA>
+
+
+
+
+      <ValorDA>AVENIDA SANTOS DUMONT 560-B TOR-B DEP-813 RECOLETA SANTIAGO</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Per_Consumo</NombreDA>
+
+
+
+
+      <ValorDA>28.04.2026 AL 28.05.2026</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Dias_Calculo</NombreDA>
+
+
+
+
+      <ValorDA>31</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Prox_Lectura</NombreDA>
+
+
+
+
+      <ValorDA>25.06.2026</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Glosa_estimada</NombreDA>
+
+
+
+
+      <ValorDA>Fecha Estimada prox.Lectura :</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Fecha_estimada</NombreDA>
+
+
+
+
+      <ValorDA>25.06.2026</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Per_Consumo3</NombreDA>
+
+
+
+
+      <ValorDA>a</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>MedidorActual</NombreDA>
+
+
+
+
+      <ValorDA>GE0000390142008</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Formato</NombreDA>
+
+
+
+
+      <ValorDA>39_01.jasper</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>TITGRAFICO</NombreDA>
+
+
+
+
+      <ValorDA>CONSUMO ÚLTIMOS 13 MESES (m3s)</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<ColoresGrafico/>
+<HistoricoConsumo>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>29</Dia>
+
+
+
+
+        <Mes>MAY</Mes>
+
+
+
+
+        <Ano>25</Ano>
+
+
+
+
+        <Consumo>22,49</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>27</Dia>
+
+
+
+
+        <Mes>JUN</Mes>
+
+
+
+
+        <Ano>25</Ano>
+
+
+
+
+        <Consumo>22,77</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>28</Dia>
+
+
+
+
+        <Mes>JUL</Mes>
+
+
+
+
+        <Ano>25</Ano>
+
+
+
+
+        <Consumo>29,74</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>27</Dia>
+
+
+
+
+        <Mes>AGO</Mes>
+
+
+
+
+        <Ano>25</Ano>
+
+
+
+
+        <Consumo>26,79</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>29</Dia>
+
+
+
+
+        <Mes>SEP</Mes>
+
+
+
+
+        <Ano>25</Ano>
+
+
+
+
+        <Consumo>28,64</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>27</Dia>
+
+
+
+
+        <Mes>OCT</Mes>
+
+
+
+
+        <Ano>25</Ano>
+
+
+
+
+        <Consumo>17,99</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>27</Dia>
+
+
+
+
+        <Mes>NOV</Mes>
+
+
+
+
+        <Ano>25</Ano>
+
+
+
+
+        <Consumo>21,96</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>29</Dia>
+
+
+
+
+        <Mes>DIC</Mes>
+
+
+
+
+        <Ano>25</Ano>
+
+
+
+
+        <Consumo>21,73</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>27</Dia>
+
+
+
+
+        <Mes>ENE</Mes>
+
+
+
+
+        <Ano>26</Ano>
+
+
+
+
+        <Consumo>23,98</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>26</Dia>
+
+
+
+
+        <Mes>FEB</Mes>
+
+
+
+
+        <Ano>26</Ano>
+
+
+
+
+        <Consumo>15,16</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>26</Dia>
+
+
+
+
+        <Mes>MAR</Mes>
+
+
+
+
+        <Ano>26</Ano>
+
+
+
+
+        <Consumo>16,26</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>27</Dia>
+
+
+
+
+        <Mes>ABR</Mes>
+
+
+
+
+        <Ano>26</Ano>
+
+
+
+
+        <Consumo>27,61</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+      <HistCons>
+
+
+
+
+        <Dia>28</Dia>
+
+
+
+
+        <Mes>MAY</Mes>
+
+
+
+
+        <Ano>26</Ano>
+
+
+
+
+        <Consumo>29,16</Consumo>
+
+
+
+
+      </HistCons>
+
+
+
+
+    </HistoricoConsumo>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Cons_Mesaa</NombreDA>
+
+
+
+
+      <ValorDA>29,66%</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Cons_Glos_Mesaa</NombreDA>
+
+
+
+
+      <ValorDA>Este mes consumiste aproximadamente un 29,66% más de gas que el mismo período del año pasado</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Cons_Mesan</NombreDA>
+
+
+
+
+      <ValorDA>5,61%</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>Cons_Glos_Mesan</NombreDA>
+
+
+
+
+      <ValorDA>Este mes consumiste aproximadamente un 5,61% más de gas que el período pasado</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>SUSCRITO_ELECTRONICO</NombreDA>
+
+
+
+
+      <ValorDA>Suscrito a Envio Electronico</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>CONCEPTO_01</NombreDA>
+
+
+
+
+      <ValorDA>Factor de Estandarización</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>DESCRIPCION_01</NombreDA>
+
+
+
+
+      <ValorDA>Valor numérico aplicado a los metros cúbicos (m3) registrados por el medidor para determinar el gas efectivamente consumido, ya que dicha medición, no considera las condiciones particulares de presión, temperatura y poder calorífico del gas.</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>CONCEPTO_02</NombreDA>
+
+
+
+
+      <ValorDA>Gas Consumido</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>DESCRIPCION_02</NombreDA>
+
+
+
+
+      <ValorDA>Cantidad de metro cúbicos estandarizados (m3S) que resulta luego de aplicarse el factor de estandarización al consumo registrado por el medidor (energía consumida).</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>COD_BARRA_REPARTO</NombreDA>
+
+
+
+
+      <ValorDA>126666688560RC193050CANN</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>OBS_REPARTO</NombreDA>
+
+
+
+
+      <ValorDA>Observaciones de Reparto:</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>OBS_REPARTO</NombreDA>
+
+
+
+
+      <ValorDA>Sin Observaciones</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>IMAGEN1</NombreDA>
+
+
+
+
+      <ValorDA>IM_GRL_RES_2</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<DatosAdjuntos>
+
+
+
+
+      <NombreDA>IMAGEN2</NombreDA>
+
+
+
+
+      <ValorDA>IMG_EE_01</ValorDA>
+
+
+
+
+    </DatosAdjuntos>
+<CartolaCF/>
+<ClubMetro>
+
+
+
+
+      <Info>Puntos Acumulados Período|116</Info>
+
+
+
+
+      <Info>Puntos por Vencer prox 3 meses|296</Info>
+
+
+
+
+      <Info>_____|Metropuntos al final del Período</Info>
+
+
+
+
+      <Info>Metropuntos al final del Período|2160</Info>
+
+
+
+
+      <Info>Saldos al:|02.06.2026</Info>
+
+
+
+
+    </ClubMetro>
+<Cliente_ClubMetro>Nombre: CARLOS HERNANDEZ IBACACHE</Cliente_ClubMetro>
