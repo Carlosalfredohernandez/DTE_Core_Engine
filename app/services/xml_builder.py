@@ -514,16 +514,19 @@ class XmlBuilderService:
                 except Exception:
                     local_name = doc_node.tag if isinstance(doc_node.tag, str) else None
                 if local_name == "DTE":
-                    # si ya es un DTE, extraer sus hijos para agregarlos directamente
-                    children = list(doc_node)
-                    for child in children:
-                        set_dte.append(child)
-                        # Añadir tail para aproximar formato del accepted (múltiples líneas + indent)
+                    # si ya es un DTE, anexar el elemento DTE completo bajo SetDTE
+                    # (evita insertar <Documento> directo, que rompe el XSD)
+                    try:
+                        moved_dte = etree.fromstring(etree.tostring(doc_node))
+                        # ajustar formato y anexar
                         try:
-                            child.tail = "\n\n\n      "
+                            moved_dte.tail = "\n\n\n      "
                         except Exception:
                             pass
-                    # continuar con el siguiente xml_doc
+                        set_dte.append(moved_dte)
+                    except Exception:
+                        # Fallback: anexar doc_node directamente
+                        set_dte.append(doc_node)
                     continue
                 # si es un Documento, envolverlo en un <DTE version="1.0">
                 # para cumplir el XSD que espera <SetDTE>/<DTE>/<Documento>
