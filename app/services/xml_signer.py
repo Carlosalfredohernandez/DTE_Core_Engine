@@ -135,6 +135,11 @@ class XmlSignerService:
 
           elem_c14n = etree.tostring(elem_for_digest, method="c14n", exclusive=exclusive)
           digest_b64 = base64.b64encode(hashlib.sha1(elem_c14n).digest()).decode()
+          # Dump canonicalized bytes and digest for debugging digest mismatches
+          try:
+            logger.info("xml_signer.digest_debug", reference=ref_attr, exclusive=exclusive, elem_c14n_preview=elem_c14n[:200], elem_c14n_b64=base64.b64encode(elem_c14n).decode(), digest_b64=digest_b64)
+          except Exception:
+            logger.info("xml_signer.digest_debug", reference=ref_attr, exclusive=exclusive, digest_b64=digest_b64)
 
           # 3. Componentes RSA para KeyValue + DER del certificado para X509Data
           private_key = cert_data.private_key
@@ -197,11 +202,20 @@ class XmlSignerService:
               si_c14n = etree.tostring(si_copy, method="c14n", exclusive=exclusive)
           else:
               si_c14n = etree.tostring(si_elem, method="c14n", exclusive=exclusive)
+              # Dump SignedInfo canonicalized bytes preview for debugging
+              try:
+                logger.info("xml_signer.si_debug", si_c14n_preview=si_c14n[:300], si_c14n_b64=base64.b64encode(si_c14n).decode(), exclusive=exclusive)
+              except Exception:
+                logger.info("xml_signer.si_debug", si_c14n_preview=si_c14n[:300], exclusive=exclusive)
           sig_bytes = private_key.sign(si_c14n, asym_padding.PKCS1v15(), hashes.SHA1())
           sig_b64 = base64.b64encode(sig_bytes).decode()
 
           # 6. Insertar SignatureValue
           sig_tree.find(f"{{{DS_NS}}}SignatureValue").text = sig_b64
+          try:
+            logger.info("xml_signer.signature_debug", signature_value_b64=sig_b64[:200], reference=ref_attr)
+          except Exception:
+            pass
 
           # Serialización final en C14N (como texto canonizado) para mantener
           # estabilidad byte-a-byte respecto a la variante que ya fue aceptada
@@ -299,10 +313,14 @@ class XmlSignerService:
                 else:
                     elem_to_verify = parent_standalone
 
-                computed = base64.b64encode(
-                  hashlib.sha1(etree.tostring(elem_to_verify, method="c14n", exclusive=exclusive)).digest()
-                ).decode()
+                elem_for_verify_c14n = etree.tostring(elem_to_verify, method="c14n", exclusive=exclusive)
+                computed = base64.b64encode(hashlib.sha1(elem_for_verify_c14n).digest()).decode()
                 result["computed_digest"] = computed
+                # Dump the canonicalized bytes used for digest computation
+                try:
+                    logger.info("xml_signer.verify_digest_debug", reference=uri, exclusive=exclusive, elem_c14n_preview=elem_for_verify_c14n[:200], elem_c14n_b64=base64.b64encode(elem_for_verify_c14n).decode(), computed_digest=computed)
+                except Exception:
+                    logger.info("xml_signer.verify_digest_debug", reference=uri, exclusive=exclusive, computed_digest=computed)
 
                 dv_elem = ref.find(f"{{{DS_NS}}}DigestValue") if ref is not None else None
                 stored = (dv_elem.text or "").strip() if dv_elem is not None else ""
@@ -328,7 +346,15 @@ class XmlSignerService:
 
                 si_elem = sig.find(f"{{{DS_NS}}}SignedInfo")
                 si_c14n = etree.tostring(si_elem, method="c14n", exclusive=exclusive)
-                result["si_c14n_hex"] = si_c14n[:200].decode("utf-8")
+                # store a preview and dump for debugging
+                try:
+                  result["si_c14n_hex"] = si_c14n[:200].decode("utf-8")
+                except Exception:
+                  result["si_c14n_hex"] = "<binary>"
+                try:
+                  logger.info("xml_signer.verify_si_debug", reference=uri, si_c14n_preview=si_c14n[:300], si_c14n_b64=base64.b64encode(si_c14n).decode(), exclusive=exclusive)
+                except Exception:
+                  logger.info("xml_signer.verify_si_debug", reference=uri, si_c14n_preview=si_c14n[:300], exclusive=exclusive)
 
                 try:
                     pub_key.verify(sig_bytes_val, si_c14n, asym_padding.PKCS1v15(), hashes.SHA1())

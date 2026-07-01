@@ -98,6 +98,12 @@ class XmlBuilderService:
                     overrides = json.load(fh)
         except Exception:
             overrides = {}
+        # Si se está generando para una empresa concreta, no aplicar overrides
+        # de datos dinámicos (emisor/receptor/totales). Los overrides deben
+        # usarse solo para hints de formato/estructura cuando no hay empresa.
+        if empresa is not None and isinstance(overrides, dict):
+            for _k in ("emisor", "receptor", "totales"):
+                overrides.pop(_k, None)
         dte_id = f"T{tipo_dte.value}F{folio}"
         
         # Elemento Raíz
@@ -453,6 +459,12 @@ class XmlBuilderService:
                     overrides = json.load(fh)
         except Exception:
             overrides = {}
+        # Si estamos generando el Envio para una empresa concreta, no usar
+        # los overrides de datos dinámicos (emisor/receptor/totales) contenidos
+        # en tools/accepted_override.json. Mantener overrides solo para layout.
+        if empresa is not None and isinstance(overrides, dict):
+            for _k in ("emisor", "receptor", "totales"):
+                overrides.pop(_k, None)
         root = etree.Element("EnvioBOLETA", nsmap=nsmap)
         root.set("version", "1.0")
         # xsi:schemaLocation es obligatorio: sin él el SII devuelve SCH-00001: Invalid Schema Name
@@ -513,7 +525,8 @@ class XmlBuilderService:
                             pass
                     # continuar con el siguiente xml_doc
                     continue
-                # si es un Documento, añadirlo tal cual (sin wrapper)
+                # si es un Documento, envolverlo en un <DTE version="1.0">
+                # para cumplir el XSD que espera <SetDTE>/<DTE>/<Documento>
                 if local_name == "Documento":
                     # Normalizar/forzar formateo interno del Documento para que
                     # tenga saltos de línea e indentación parecidos al accepted
@@ -733,11 +746,36 @@ class XmlBuilderService:
                     doc_node.text = "\n\n\n        "
                 except Exception:
                     pass
-                set_dte.append(doc_node)
                 try:
-                    doc_node.tail = "\n\n\n      "
+                    # Crear wrapper DTE con atributo version obligatorio
+                    dte_wrapper = etree.Element('{http://www.sii.cl/SiiDte}DTE', version='1.0')
+                    # mover Documento dentro del DTE
+                    # cuando doc_node proviene de parse independiente, debemos
+                    # reparentarlo usando fromstring/etree to avoid multiple parents
+                    moved_doc = etree.fromstring(etree.tostring(doc_node))
+                    dte_wrapper.append(moved_doc)
+                    # Si el siguiente sibling es un Signature, moverlo también dentro del DTE
+                    nxt = None
+                    try:
+                        sibling = doc_node.getnext()
+                        if sibling is not None and etree.QName(sibling).localname == 'Signature':
+                            moved_sig = etree.fromstring(etree.tostring(sibling))
+                            dte_wrapper.append(moved_sig)
+                    except Exception:
+                        pass
+                    # ajustar formato y anexar
+                    try:
+                        moved_doc.tail = "\n\n\n      "
+                    except Exception:
+                        pass
+                    set_dte.append(dte_wrapper)
                 except Exception:
-                    pass
+                    # Fallback: si algo falla, adjuntar el documento directamente
+                    set_dte.append(doc_node)
+                    try:
+                        doc_node.tail = "\n\n\n      "
+                    except Exception:
+                        pass
             except Exception:
                 pass
 
