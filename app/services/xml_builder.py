@@ -465,22 +465,12 @@ class XmlBuilderService:
         if empresa is not None and isinstance(overrides, dict):
             for _k in ("emisor", "receptor", "totales"):
                 overrides.pop(_k, None)
-        root = etree.Element("EnvioBOLETA", nsmap=nsmap)
+        # Usar la forma histórica "EnvioDTE" y el XSD relacionado que el SII
+        # acepta en producción (EnvioDTE_v10.xsd). Esto coincide con ejemplos
+        # oficiales y evita SCH-00001: Invalid Schema Name en muchos casos.
+        root = etree.Element("EnvioDTE", nsmap=nsmap)
         root.set("version", "1.0")
-        # xsi:schemaLocation es obligatorio: sin él el SII devuelve SCH-00001: Invalid Schema Name
-        # El segundo token debe ser una URL absoluta al XSD; antes se enviaba solo el nombre de archivo.
-        # Usar URL absoluta HTTPS para el XSD en el segundo token — algunos
-        # validadores SII requieren esquema accesible por HTTPS y sin ambigüedad.
-        # Algunos validadores internos del SII esperan explícitamente HTTP
-        # (no HTTPS) en el XSD; usar la forma más compatible posible.
-        # Muchos validadores del SII esperan que el segundo token de
-        # xsi:schemaLocation sea el nombre del XSD (no una URL completa).
-        # Usar la forma "<namespace> EnvioBOLETA_v11.xsd" maximiza
-        # la compatibilidad y suele evitar SCH-00001: Invalid Schema Name.
-        root.set(
-            f"{{{xsi_ns}}}schemaLocation",
-            f"{sii_ns} EnvioBOLETA_v11.xsd",
-        )
+        root.set(f"{{{xsi_ns}}}schemaLocation", f"{sii_ns} EnvioDTE_v10.xsd")
         
         rut_emisor = XmlBuilderService._normalize_rut(str(XmlBuilderService._value(empresa, "rut_emisor", settings.rut_emisor)))
         rut_envia = XmlBuilderService._normalize_rut(str(XmlBuilderService._value(empresa, "rut_envia", settings.rut_envia)))
