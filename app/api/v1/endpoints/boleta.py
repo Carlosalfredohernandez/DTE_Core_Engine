@@ -359,7 +359,7 @@ async def enviar_boleta(
 ):
     """Envía una boleta generada previamente al SII."""
     try:
-        dte = await DteService.enviar_boleta(db, request.dte_id, empresa=empresa)
+        dte = await DteService.enviar_boleta(db, request.dte_id, empresa=empresa, schema_variant=request.schema_variant)
         
         return EnviarBoletaResponse(
             dte_id=dte.id,

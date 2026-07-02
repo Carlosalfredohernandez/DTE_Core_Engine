@@ -43,6 +43,7 @@ class BoletaResponse(BaseModel):
 
 class EnviarBoletaRequest(BaseModel):
     dte_id: int
+    schema_variant: Optional[str] = None
 
 
 class EnviarBoletaResponse(BaseModel):

@@ -235,7 +235,7 @@ class DteService:
         return dte_db
 
     @staticmethod
-    async def enviar_boleta(session: AsyncSession, dte_id: int, empresa: Empresa | None = None) -> Dte:
+    async def enviar_boleta(session: AsyncSession, dte_id: int, empresa: Empresa | None = None, schema_variant: str | None = None) -> Dte:
         """
         Toma un DTE generado, lo envuelve en un EnvioDTE, lo firma y lo envía al SII.
         """
@@ -285,6 +285,20 @@ class DteService:
             exclusive=None,
             empresa=empresa,
         )
+
+        # Si se solicita una variante de schemaLocation para pruebas A/B,
+        # reemplazar el atributo xsi:schemaLocation antes del upload.
+        if schema_variant:
+            try:
+                parser = etree.XMLParser(recover=True, encoding='ISO-8859-1')
+                root = etree.fromstring(envio_xml_firmado.encode('ISO-8859-1'), parser=parser)
+                xsi = "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation"
+                # schema_variant puede ser un token simple o "namespace url" completo
+                root.set(xsi, schema_variant)
+                envio_xml_firmado = etree.tostring(root, encoding='ISO-8859-1', xml_declaration=True, pretty_print=True).decode('latin-1')
+            except Exception:
+                # Si falla el parse/rewrite, seguir con el XML original (no bloquear pruebas)
+                logger.exception("No se pudo aplicar schema_variant al Envio; se usará el original")
 
         # Guardrail: nunca enviar una firma suelta al SII.
         # Aceptar tanto EnvioBOLETA como EnvioDTE (algunos accepted samples usan EnvioDTE)
