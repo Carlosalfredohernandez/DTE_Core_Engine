@@ -79,13 +79,14 @@ class XmlSignerService:
           # para evitar conflictos (p.ej. '<?xml ... encoding="ISO-8859-1"?>').
           # También asegurar que tengamos una cadena de texto.
           if isinstance(xml_content, bytes):
-            xml_content = xml_content.decode('utf-8', errors='replace')
+            # interpretar bytes tal como fueron producidos: latin-1 para SII
+            xml_content = xml_content.decode('latin-1', errors='replace')
           # quitar declaración XML inicial si existe
           import re
           xml_content = re.sub(r"^\s*<\?xml[^>]*\?>\s*", "", xml_content)
-          # parse usando UTF-8 explícito
-          parser = etree.XMLParser(recover=True, encoding='utf-8')
-          root = etree.fromstring(xml_content.encode('utf-8'), parser=parser)
+          # parse usando ISO-8859-1 (latin-1) para alinear con el upload al SII
+          parser = etree.XMLParser(recover=True, encoding='ISO-8859-1')
+          root = etree.fromstring(xml_content.encode('ISO-8859-1'), parser=parser)
 
           # 1. Localizar el elemento a firmar por su ID
           if reference_uri:
@@ -220,8 +221,13 @@ class XmlSignerService:
           # Serialización final en C14N (como texto canonizado) para mantener
           # estabilidad byte-a-byte respecto a la variante que ya fue aceptada
           # por el SII en este proyecto.
-          c14n_content = etree.tostring(root, method="c14n", exclusive=exclusive).decode("utf-8")
-          return '<?xml version="1.0" encoding="UTF-8"?>\n' + c14n_content
+          # Serializar canonicalized bytes y devolver con declaración ISO-8859-1
+          c14n_bytes = etree.tostring(root, method="c14n", exclusive=exclusive)
+          try:
+            c14n_content = c14n_bytes.decode("latin-1")
+          except Exception:
+            c14n_content = c14n_bytes.decode("utf-8", errors="replace")
+          return '<?xml version="1.0" encoding="ISO-8859-1"?>\n' + c14n_content
 
         except XmlSignError:
             raise

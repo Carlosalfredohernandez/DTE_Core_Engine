@@ -465,12 +465,15 @@ class XmlBuilderService:
         if empresa is not None and isinstance(overrides, dict):
             for _k in ("emisor", "receptor", "totales"):
                 overrides.pop(_k, None)
-        # Usar la forma histórica "EnvioDTE" y el XSD relacionado que el SII
-        # acepta en producción (EnvioDTE_v10.xsd). Esto coincide con ejemplos
-        # oficiales y evita SCH-00001: Invalid Schema Name en muchos casos.
-        root = etree.Element("EnvioDTE", nsmap=nsmap)
+        # Generar el sobre como EnvioBOLETA y usar la URL absoluta al XSD
+        # como segundo token de xsi:schemaLocation. Muchos validadores SII
+        # aceptan mejor la URL completa: <namespace> <absolute-xsd-url>.
+        root = etree.Element("EnvioBOLETA", nsmap=nsmap)
         root.set("version", "1.0")
-        root.set(f"{{{xsi_ns}}}schemaLocation", f"{sii_ns} EnvioDTE_v10.xsd")
+        root.set(
+            f"{{{xsi_ns}}}schemaLocation",
+            f"{sii_ns} http://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd",
+        )
         
         rut_emisor = XmlBuilderService._normalize_rut(str(XmlBuilderService._value(empresa, "rut_emisor", settings.rut_emisor)))
         rut_envia = XmlBuilderService._normalize_rut(str(XmlBuilderService._value(empresa, "rut_envia", settings.rut_envia)))
