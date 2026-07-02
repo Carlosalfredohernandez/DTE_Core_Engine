@@ -473,9 +473,13 @@ class XmlBuilderService:
         # validadores SII requieren esquema accesible por HTTPS y sin ambigüedad.
         # Algunos validadores internos del SII esperan explícitamente HTTP
         # (no HTTPS) en el XSD; usar la forma más compatible posible.
+        # Muchos validadores del SII esperan que el segundo token de
+        # xsi:schemaLocation sea el nombre del XSD (no una URL completa).
+        # Usar la forma "<namespace> EnvioBOLETA_v11.xsd" maximiza
+        # la compatibilidad y suele evitar SCH-00001: Invalid Schema Name.
         root.set(
             f"{{{xsi_ns}}}schemaLocation",
-            f"{sii_ns} http://www.sii.cl/SiiDte/EnvioBOLETA_v11.xsd",
+            f"{sii_ns} EnvioBOLETA_v11.xsd",
         )
         
         rut_emisor = XmlBuilderService._normalize_rut(str(XmlBuilderService._value(empresa, "rut_emisor", settings.rut_emisor)))
@@ -1055,9 +1059,12 @@ class XmlBuilderService:
                                 pass
         except Exception:
             pass
+        # El SII históricamente trabaja en latin1/ISO-8859-1. Serializar
+        # el Envio en ISO-8859-1 reduce discrepancias que pueden causar
+        # rechazos de esquema/encoding en el upload.
         return etree.tostring(
             root,
-            encoding="UTF-8",
+            encoding="ISO-8859-1",
             xml_declaration=True,
             pretty_print=True,
-        ).decode("utf-8")
+        ).decode("latin-1")
