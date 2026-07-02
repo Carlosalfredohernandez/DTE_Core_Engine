@@ -287,8 +287,16 @@ class DteService:
         )
 
         # Guardrail: nunca enviar una firma suelta al SII.
-        if "<EnvioBOLETA" not in envio_xml_firmado:
-            raise SiiEnvioError("XML de envío inválido: no contiene EnvioBOLETA (solo Signature)")
+        # Aceptar tanto EnvioBOLETA como EnvioDTE (algunos accepted samples usan EnvioDTE)
+        try:
+            root_check = etree.fromstring(envio_xml_firmado.encode("latin-1"))
+            root_local = etree.QName(root_check).localname
+        except Exception:
+            root_local = None
+        if root_local not in ("EnvioBOLETA", "EnvioDTE"):
+            raise SiiEnvioError(
+                f"XML de envío inválido: root esperado EnvioBOLETA/EnvioDTE, encontrado: {root_local}"
+            )
 
         # Verificación local de firmas XMLDSIG antes del upload
         verificaciones = XmlSignerService.verify_signatures(envio_xml_firmado, exclusive=None, empresa=empresa)
